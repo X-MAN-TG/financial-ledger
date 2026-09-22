@@ -1,0 +1,376 @@
+/**
+ * THEME AND VISUAL SYSTEM (17-theme-and-visual-system.txt)
+ *
+ * All colour is expressed as CSS custom properties switched via a
+ * [data-theme] attribute on <html>. Components never hard-code hex values
+ * (17 section 2.1). Semantic meanings (success/warning/danger/info) are
+ * identical across all seven themes (17 section 3).
+ *
+ * Tokens:
+ *   --surface-0..3   background layers / elevation steps
+ *   --text-1..3      primary / secondary / muted
+ *   --border, --border-strong
+ *   --accent, --accent-fg, --accent-soft
+ *   --success/--warning/--danger/--info (+ -soft variants)
+ *   --shadow-1..3    elevation (OLED substitutes borders for shadows)
+ */
+
+:root {
+  /* Spacing, radius and elevation scales shared by every screen (16 s10). */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --font-display: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', sans-serif;
+  --font-sans: 'Inter Variable', 'Inter', sans-serif;
+  /* Tabular figures keep columns of numbers optically aligned without width wobble (16 s9). */
+  --font-numeric: 'JetBrains Mono Variable', 'JetBrains Mono', monospace;
+
+  --header-h: 60px;
+  --bottomnav-h: 64px;
+}
+
+/* ------------------------------------------------------------- LIGHT ---- */
+[data-theme='light'] {
+  color-scheme: light;
+  --surface-0: #f6f7f9;
+  --surface-1: #ffffff;
+  --surface-2: #f2f4f7;
+  --surface-3: #e9edf2;
+  --text-1: #10151f;
+  --text-2: #4a5567;
+  --text-3: #6b778a;
+  --border: #dbe1eb;
+  --border-strong: #c2cbd7;
+  --accent: #2f5fd8;
+  --accent-fg: #ffffff;
+  --accent-soft: #e8efff;
+  --success: #17805a;
+  --success-soft: #e2f4ec;
+  --warning: #9a6200;
+  --warning-soft: #fdf0d9;
+  --danger: #c0372b;
+  --danger-soft: #fdeceb;
+  --info: #2f5fd8;
+  --info-soft: #e8efff;
+  --shadow-1: 0 1px 2px rgba(16, 21, 31, 0.06);
+  --shadow-2: 0 2px 8px rgba(16, 21, 31, 0.08);
+  --shadow-3: 0 12px 28px rgba(16, 21, 31, 0.12);
+  --table-stripe: #f8fafc;
+  --overlay: rgba(16, 21, 31, 0.42);
+  --card-bg: #ffffff;
+  --card-border: #dbe1eb;
+  --card-shadow: 0 1px 2px rgba(16,21,31,.04), 0 6px 16px -6px rgba(16,21,31,.10);
+  --hero-bg: #eef3fd;
+  --hero-border: #cfddf8;
+  --chip-bg: #eef2f7;
+  --chart-grid: #e6eaf0;
+  --sidebar-bg: #ffffff;
+}
+
+/* -------------------------------------------------------------- DARK ---- */
+[data-theme='dark'] {
+  color-scheme: dark;
+  --surface-0: #14171c;
+  --surface-1: #1b1f26;
+  --surface-2: #222731;
+  --surface-3: #2b313c;
+  --text-1: #eef1f6;
+  --text-2: #aeb7c5;
+  --text-3: #8e98a8;
+  --border: #313845;
+  --border-strong: #464f61;
+  --accent: #6f95ef;
+  --accent-fg: #0d1016;
+  --accent-soft: #23304d;
+  --success: #4cc08d;
+  --success-soft: #16332a;
+  --warning: #e0a33f;
+  --warning-soft: #362b17;
+  --danger: #ef7268;
+  --danger-soft: #3a211f;
+  --info: #6f95ef;
+  --info-soft: #23304d;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 2px 10px rgba(0, 0, 0, 0.45);
+  --shadow-3: 0 16px 34px rgba(0, 0, 0, 0.55);
+  --table-stripe: #1e232b;
+  --overlay: rgba(0, 0, 0, 0.6);
+  --card-bg: #1b1f27;
+  --card-border: #2d3442;
+  --card-shadow: 0 1px 2px rgba(0,0,0,.5), 0 8px 20px -8px rgba(0,0,0,.6);
+  --hero-bg: #1b2537;
+  --hero-border: #2e405d;
+  --chip-bg: #232834;
+  --chart-grid: #2a2f3a;
+  --sidebar-bg: #171a21;
+}
+
+/* --------------------------------------------------------- OLED DARK ---- */
+/* True black surfaces. Depth comes from borders and surface steps, not
+   shadows, because shadow is invisible against #000 (17 section 1.3). */
+[data-theme='oled'] {
+  color-scheme: dark;
+  --surface-0: #000000;
+  --surface-1: #060709;
+  --surface-2: #0e1014;
+  --surface-3: #181b21;
+  --text-1: #f4f6f8;
+  --text-2: #b0b7c2;
+  --text-3: #8f98a6;
+  --border: #272b33;
+  --border-strong: #3d434f;
+  --accent: #7aa2ff;
+  --accent-fg: #000000;
+  --accent-soft: #101a2e;
+  --success: #46c98c;
+  --success-soft: #07231a;
+  --warning: #e5aa4a;
+  --warning-soft: #241a08;
+  --danger: #f4796f;
+  --danger-soft: #290f0e;
+  --info: #7aa2ff;
+  --info-soft: #101a2e;
+  --shadow-1: none;
+  --shadow-2: none;
+  --shadow-3: 0 0 0 1px #22252b;
+  --table-stripe: #090b0e;
+  --overlay: rgba(0, 0, 0, 0.78);
+  --card-bg: #0a0c0f;
+  --card-border: #272b33;
+  --card-shadow: none;
+  --hero-bg: #0d1420;
+  --hero-border: #22354f;
+  --chip-bg: #141414;
+  --chart-grid: #1e1e1e;
+  --sidebar-bg: #050505;
+}
+
+/* --------------------------------------------------- INDIGO EXECUTIVE ---- */
+[data-theme='indigo'] {
+  color-scheme: dark;
+  --surface-0: #12142a;
+  --surface-1: #191c38;
+  --surface-2: #212549;
+  --surface-3: #2b3059;
+  --text-1: #eef0ff;
+  --text-2: #b0b6de;
+  --text-3: #949dc9;
+  --border: #303669;
+  --border-strong: #444d8b;
+  --accent: #9a8cff;
+  --accent-fg: #14162c;
+  --accent-soft: #272a55;
+  --success: #52c79a;
+  --success-soft: #133329;
+  --warning: #dfa851;
+  --warning-soft: #33280f;
+  --danger: #f0756f;
+  --danger-soft: #371d22;
+  --info: #7fa6ff;
+  --info-soft: #1f2a52;
+  --shadow-1: 0 1px 2px rgba(6, 8, 24, 0.5);
+  --shadow-2: 0 2px 12px rgba(6, 8, 24, 0.55);
+  --shadow-3: 0 18px 38px rgba(6, 8, 24, 0.62);
+  --table-stripe: #1c1f3e;
+  --overlay: rgba(9, 11, 30, 0.7);
+  --card-bg: #191a35;
+  --card-border: #303566;
+  --card-shadow: 0 1px 2px rgba(4,4,15,.55), 0 10px 24px -10px rgba(4,4,15,.7);
+  --hero-bg: #221f46;
+  --hero-border: #3b3470;
+  --chip-bg: #222343;
+  --chart-grid: #2a2b52;
+  --sidebar-bg: #15162e;
+}
+
+/* ------------------------------------------------------ EMERALD LEDGER ---- */
+[data-theme='emerald'] {
+  color-scheme: dark;
+  --surface-0: #101715;
+  --surface-1: #16201d;
+  --surface-2: #1d2a26;
+  --surface-3: #263531;
+  --text-1: #ecf3f0;
+  --text-2: #a9bcb5;
+  --text-3: #8ea39c;
+  --border: #2a3b34;
+  --border-strong: #3c5249;
+  --accent: #3fbe87;
+  --accent-fg: #06120d;
+  --accent-soft: #14312a;
+  --success: #3fbe87;
+  --success-soft: #14312a;
+  --warning: #d9a552;
+  --warning-soft: #302713;
+  --danger: #e8776c;
+  --danger-soft: #34201e;
+  --info: #62a8d8;
+  --info-soft: #172b36;
+  --shadow-1: 0 1px 2px rgba(4, 12, 9, 0.5);
+  --shadow-2: 0 2px 12px rgba(4, 12, 9, 0.5);
+  --shadow-3: 0 18px 36px rgba(4, 12, 9, 0.6);
+  --table-stripe: #182320;
+  --overlay: rgba(5, 14, 11, 0.7);
+  --card-bg: #151d1a;
+  --card-border: #2a3b34;
+  --card-shadow: 0 1px 2px rgba(2,12,8,.55), 0 10px 24px -10px rgba(2,12,8,.7);
+  --hero-bg: #12281f;
+  --hero-border: #27503c;
+  --chip-bg: #1b2621;
+  --chart-grid: #25332d;
+  --sidebar-bg: #0d1512;
+}
+
+/* ------------------------------------------------------- MIDNIGHT NAVY ---- */
+[data-theme='navy'] {
+  color-scheme: dark;
+  --surface-0: #0b1524;
+  --surface-1: #101d31;
+  --surface-2: #16273f;
+  --surface-3: #1e3250;
+  --text-1: #e9f0fa;
+  --text-2: #a5b7cd;
+  --text-3: #879aba;
+  --border: #223758;
+  --border-strong: #325078;
+  --accent: #56a8e8;
+  --accent-fg: #04101d;
+  --accent-soft: #14283f;
+  --success: #43bf92;
+  --success-soft: #0e2e27;
+  --warning: #d9a84f;
+  --warning-soft: #2f2712;
+  --danger: #ec7b70;
+  --danger-soft: #331d1f;
+  --info: #56a8e8;
+  --info-soft: #14283f;
+  --shadow-1: 0 1px 2px rgba(2, 9, 20, 0.55);
+  --shadow-2: 0 2px 12px rgba(2, 9, 20, 0.55);
+  --shadow-3: 0 18px 38px rgba(2, 9, 20, 0.65);
+  --table-stripe: #122035;
+  --overlay: rgba(3, 10, 22, 0.72);
+  --card-bg: #101d31;
+  --card-border: #223758;
+  --card-shadow: 0 1px 2px rgba(2,9,20,.5), 0 10px 24px -10px rgba(2,9,20,.7);
+  --hero-bg: #12283f;
+  --hero-border: #2a4568;
+  --chip-bg: #16273f;
+  --chart-grid: #1e3250;
+  --sidebar-bg: #0d1826;
+}
+
+/* ------------------------------------------------------ SLATE GRAPHITE ---- */
+[data-theme='slate'] {
+  color-scheme: dark;
+  --surface-0: #17191d;
+  --surface-1: #1e2126;
+  --surface-2: #262a31;
+  --surface-3: #31363f;
+  --text-1: #eceef2;
+  --text-2: #adb3bd;
+  --text-3: #9199a6;
+  --border: #333943;
+  --border-strong: #49515d;
+  --accent: #a596e8;
+  --accent-fg: #14151a;
+  --accent-soft: #292a3d;
+  --success: #4cbd8d;
+  --success-soft: #16302a;
+  --warning: #d7a556;
+  --warning-soft: #2f2716;
+  --danger: #e87d72;
+  --danger-soft: #332020;
+  --info: #7fa8dd;
+  --info-soft: #1d2836;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-2: 0 2px 12px rgba(0, 0, 0, 0.45);
+  --shadow-3: 0 18px 36px rgba(0, 0, 0, 0.6);
+  --table-stripe: #212429;
+  --overlay: rgba(0, 0, 0, 0.66);
+  --card-bg: #1c1f24;
+  --card-border: #313740;
+  --card-shadow: 0 1px 2px rgba(0,0,0,.5), 0 10px 24px -10px rgba(0,0,0,.6);
+  --hero-bg: #232232;
+  --hero-border: #3a3752;
+  --chip-bg: #24272e;
+  --chart-grid: #2c3038;
+  --sidebar-bg: #191b20;
+}
+
+/* --------------------------------------------------------- PEARL LIGHT ---- */
+/* A second light option with a warmer paper tone and emerald accent. */
+[data-theme='pearl'] {
+  color-scheme: light;
+  --surface-0: #f4f2ee;
+  --surface-1: #fffdfa;
+  --surface-2: #f0ede7;
+  --surface-3: #e6e2da;
+  --text-1: #1b1a17;
+  --text-2: #55534d;
+  --text-3: #757168;
+  --border: #dcd7ce;
+  --border-strong: #c2bcb1;
+  --accent: #10715a;
+  --accent-fg: #ffffff;
+  --accent-soft: #dff0ea;
+  --success: #10715a;
+  --success-soft: #dff0ea;
+  --warning: #8f5f0b;
+  --warning-soft: #fbeed6;
+  --danger: #b23a2d;
+  --danger-soft: #fbe9e6;
+  --info: #2a5ea8;
+  --info-soft: #e4edf9;
+  --shadow-1: 0 1px 2px rgba(27, 26, 23, 0.06);
+  --shadow-2: 0 2px 8px rgba(27, 26, 23, 0.09);
+  --shadow-3: 0 12px 28px rgba(27, 26, 23, 0.13);
+  --table-stripe: #faf8f4;
+  --overlay: rgba(27, 26, 23, 0.4);
+  --card-bg: #ffffff;
+  --card-border: #dcd7ce;
+  --card-shadow: 0 1px 2px rgba(27,26,23,.05), 0 6px 16px -6px rgba(27,26,23,.12);
+  --hero-bg: #e9f2ee;
+  --hero-border: #c5ddd2;
+  --chip-bg: #f1efe9;
+  --chart-grid: #e4e0d8;
+  --sidebar-bg: #faf8f4;
+}
+
+/* Print/PDF is always light and print-safe regardless of app theme
+   (17 section 4). */
+@media print {
+  :root,
+  [data-theme] {
+    --surface-0: #ffffff;
+    --surface-1: #ffffff;
+    --surface-2: #ffffff;
+    --surface-3: #f2f2f2;
+    --text-1: #000000;
+    --text-2: #333333;
+    --text-3: #555555;
+    --border: #cccccc;
+    --border-strong: #999999;
+    --shadow-1: none;
+    --shadow-2: none;
+    --shadow-3: none;
+    --card-bg: #ffffff;
+    --card-border: #cccccc;
+    --card-shadow: none;
+    --hero-bg: #ffffff;
+    --hero-border: #cccccc;
+    --chip-bg: #f2f2f2;
+    --chart-grid: #dddddd;
+    --sidebar-bg: #ffffff;
+    --table-stripe: #fafafa;
+  }
+}

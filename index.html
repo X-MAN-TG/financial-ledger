@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en" data-theme="navy">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover + safe-area padding for iOS notch/home indicator
+         (18-responsive-and-mobile.txt section 5). -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5"
+    />
+    <meta name="theme-color" content="#101d31" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="description" content="Private daily transaction ledger and databook" />
+    <!-- Private tool: never index. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Ledger</title>
+    <script>
+      // Apply the saved theme before first paint to avoid a flash of the
+      // wrong palette. Mirrors THEME_STORAGE_KEY in src/lib/theme.ts.
+      (function () {
+        try {
+          var t = localStorage.getItem('ledger.theme');
+          var valid = ['light', 'dark', 'oled', 'indigo', 'emerald', 'navy', 'slate', 'pearl'];
+          if (t && valid.indexOf(t) !== -1) {
+            document.documentElement.setAttribute('data-theme', t);
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            document.documentElement.setAttribute('data-theme', 'light');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

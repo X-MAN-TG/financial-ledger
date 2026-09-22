@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Production builds
+dist/
+
+# Cloudflare & local runtime state
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env
+.env.*
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# Secrets & local-only configurations
+wrangler.toml
+wrangler.dev.toml
+wrangler.preview.toml
+
+# Test files, test fixtures, debug logs & scratch artifacts
+tests/
+scripts/
+shots/
+BUGS-FOUND.md
+vitest.config.ts
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/

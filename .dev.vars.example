@@ -1,0 +1,10 @@
+# Cloudflare Worker Local Development Secrets
+# Copy this file to .dev.vars and populate with development secrets.
+# Never commit .dev.vars to version control.
+
+SESSION_SIGNING_KEY=your-random-32-byte-base64-or-hex-string
+OWNER_BOOTSTRAP_SECRET=your-one-time-owner-provisioning-secret
+
+# Optional Google OAuth:
+GOOGLE_OAUTH_CLIENT_ID=
+GOOGLE_OAUTH_CLIENT_SECRET=

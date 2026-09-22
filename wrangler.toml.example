@@ -1,0 +1,57 @@
+name = "financial-ledger"
+main = "worker/index.ts"
+compatibility_date = "2024-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Serve the built SPA (Vite output) directly from the Worker via the Assets binding.
+# All non-/api paths fall back to index.html for client-side routing.
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# Map the @shared/* path alias for the Worker bundler (esbuild).
+[alias]
+"@shared/constants" = "./shared/constants.ts"
+"@shared/types" = "./shared/types.ts"
+"@shared/validation" = "./shared/validation.ts"
+"@shared/business" = "./shared/business.ts"
+
+# ---------------------------------------------------------------------------
+# Non-secret configuration. MAX_USERS is the single source of truth for the
+# account cap and is read at request time (never hard-coded in handlers/UI).
+# ---------------------------------------------------------------------------
+[vars]
+MAX_USERS = "10"
+APP_ENV = "production"
+# Comma-separated list; the Worker uses the first origin for OAuth redirects.
+# Leave empty to auto-derive from the incoming request origin.
+APP_ORIGIN = ""
+# R2 backup retention window in days (Owner-tunable, not hard-coded).
+BACKUP_RETENTION_DAYS = "30"
+
+# ---------------------------------------------------------------------------
+# Bindings. Create these resources in your Cloudflare account, then paste the
+# database_id below (see README "Deploy" section).
+# ---------------------------------------------------------------------------
+[[d1_databases]]
+binding = "DB"
+database_name = "daily_ledger_db"
+database_id = "YOUR_D1_DATABASE_ID_HERE"
+migrations_dir = "db/migrations"
+
+# Optional R2 backup bucket (uncomment once R2 is enabled in Cloudflare dashboard):
+# [[r2_buckets]]
+# binding = "BACKUP_BUCKET"
+# bucket_name = "daily-ledger-backups"
+
+# [triggers]
+# crons = ["0 3 * * *"]
+
+# ---------------------------------------------------------------------------
+# Secrets (set via `wrangler secret put NAME`, never committed):
+#   SESSION_SIGNING_KEY        - random high-entropy string
+#   GOOGLE_OAUTH_CLIENT_ID     - optional (Google sign-in)
+#   GOOGLE_OAUTH_CLIENT_SECRET - optional (Google sign-in)
+#   OWNER_BOOTSTRAP_SECRET     - one-time owner provisioning secret
+# ---------------------------------------------------------------------------
