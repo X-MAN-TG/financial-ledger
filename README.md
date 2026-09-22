@@ -1,142 +1,215 @@
-# Financial Ledger
+# 💠 Financial Ledger
 
-A private, offline-first financial ledger PWA for tracking daily currency-exchange trades. Built with React, TypeScript, and Cloudflare Workers + D1 + R2. Autosaves instantly, works fully offline, and syncs safely when back online.
+### Your private daily trading ledger — fast, offline-first, and built like a real financial product.
 
-> **Repository**: [https://github.com/X-MAN-TG/financial-ledger](https://github.com/X-MAN-TG/financial-ledger)
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/<your-username>/financial-ledger)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-daily--ledger.workers.dev-00c896?style=for-the-badge&logo=cloudflare&logoColor=white)](https://daily-ledger.100coldice.workers.dev)
+[![Built with React](https://img.shields.io/badge/React-18-149eca?style=flat-square&logo=react&logoColor=white)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20%2B%20D1%20%2B%20R2-f38020?style=flat-square&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
+[![Offline First](https://img.shields.io/badge/Offline-First-6c5ce7?style=flat-square&logo=pwa&logoColor=white)](#-offline-first-architecture)
+[![License](https://img.shields.io/badge/License-Private-lightgrey?style=flat-square)](#-license)
 
----
+**[🔴 Live Demo →](https://daily-ledger.100coldice.workers.dev)**
 
-## Architecture & Layers
-
-| Layer | Tech | Description |
-|---|---|---|
-| **Frontend** | React, TypeScript, Vite, Tailwind CSS, TanStack Query/Table, Recharts, Dexie (IndexedDB), Service Worker (vite-plugin-pwa), jsPDF | Responsive, mobile-first PWA with optimistic UI, offline storage, and instant feedback. |
-| **Backend** | Cloudflare Workers (TypeScript) | Native fetch router serving secure API endpoints and single-page application assets. |
-| **Database** | Cloudflare D1 (SQLite) | Edge SQLite database providing relational storage for users, days, rows, columns, and audit events. |
-| **Backup** | Cloudflare R2 + client-side JSON/CSV/PDF export | Secure object storage for automatic database snapshots and client-side document exports. |
-| **Shared** | Zod validation + business rules | Canonical schemas and domain rules shared identically between client and server. |
+</div>
 
 ---
 
-## Core Guarantees
+## ✨ What is this?
 
-- **Absolute per-user data isolation** — enforced server-side on every request; ownership mismatches return `404`, never confirming another user's data.
-- **Offline-first architecture** — every edit writes to IndexedDB first; a sync engine flushes an idempotent queue (client-generated UUIDs + server `sync_operations` ledger) with exponential backoff. Survives tab close/reopen.
-- **Idempotent sync** — replaying an `operationId` returns `DUPLICATE_IGNORED`; guarantees no duplicate rows and no lost edits.
-- **Completion state machine & totals** — defined once in `shared/business.ts` and re-validated by the Worker (an incomplete row can never be marked completed).
-- **Client-only PDF rendering** — the Worker never renders PDFs; exports compile in the client using `jspdf` and `jspdf-autotable`.
-- **MAX_USERS cap** — a single configurable environment variable enforced identically at self-signup and owner-created accounts.
-- **Eight curated themes** (Light, Dark, OLED Dark, Midnight Navy, Indigo Executive, Emerald Ledger, Slate Graphite, Pearl) driven by CSS custom properties and theme tokens.
-- **Owner administration console** — separate authentication path and surface: system health, real-time stats, global audit log, and safe column management (archive, never destroy data).
+**Financial Ledger** is a private, mobile-first financial transaction ledger — a modern
+"daily databook" for anyone who manually tracks daily currency-exchange or trading
+activity and wants something dramatically better than a spreadsheet, without the
+overhead of full accounting software.
+
+Every day gets its own ledger. Every user's data is completely isolated. Every
+transaction autosaves instantly — online or offline — and syncs safely the moment
+connectivity returns. It's designed to feel like a native financial app, not a website.
+
+> Built for **speed, reliability, and trust** first — visual polish second.
+> Data integrity always wins over everything else.
 
 ---
 
-## Repository Layout
+## 🖼️ Preview
+
+| Dashboard | Daily Ledger | Analytics |
+|:---:|:---:|:---:|
+| *your home screen* | *the beating heart of the app* | *premium fintech-grade insights* |
+
+*(Add your own screenshots here — drop them in `/docs/screenshots` and update the paths.)*
+
+---
+
+## 🚀 Live Demo
+
+**Try it now → [daily-ledger.100coldice.workers.dev](https://daily-ledger.100coldice.workers.dev)**
+
+---
+
+## 🧠 Core Features
+
+### 📒 The Daily Ledger
+- One dedicated ledger per calendar date — open any day, past or present
+- Fast row-based entry: add/delete rows, Tab/Enter keyboard flow, auto-focus
+- Tracks Customer, INR, INR Received, USDT, Final RUB, Extras, Order Done, and Notes
+- A live, always-visible totals bar that recalculates instantly on every edit
+- Mark any day as **Day Off** — reopen it anytime without losing data
+
+### 🔌 Offline-First, Always
+- Every entry is saved locally first — the app works fully with no internet
+- Automatic, idempotent background sync the moment you're back online
+- Survives closed tabs, browser restarts, and iOS Safari "swipe away"
+- Zero duplicate transactions, zero lost edits — guaranteed by design
+
+### 📊 Real Analytics, Not Decoration
+- Today / 7 Days / 30 Days / Monthly / All-Time breakdowns
+- Transaction volume trends, extras trends, completion rates
+- Most active days, top customers, currency movement — all computed server-side
+
+### 👥 Customers & Timeline
+- A lightweight customer directory with per-customer transaction history
+- A searchable, filterable timeline of your entire trading history, grouped by date
+
+### 🔐 Private by Design
+- Strict per-user data isolation, enforced at the server — not just the UI
+- Two distinct roles: **Owner** (administration) and **User** (personal ledger)
+- Every meaningful action is audit-logged
+
+### 💾 Backup You Can Trust
+- Export your full ledger as PDF, CSV, or JSON — generated entirely in your browser
+- Automated Cloudflare R2 backups + D1 Time Travel as a safety net
+- The app never claims a backup succeeded unless it actually did
+
+### 🎨 A Theme for Every Mood
+- Light, Dark, and a true **OLED Black** theme
+- Four additional premium color themes (navy, indigo, emerald, slate)
+- Every theme is mature, professional, and easy on the eyes
+
+---
+
+## 🏗️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | React · TypeScript · Vite · Tailwind CSS · shadcn/ui · Lucide Icons |
+| **Motion & Charts** | Motion (animations) · Recharts (analytics) |
+| **State & Forms** | TanStack Query · TanStack Table · React Hook Form · Zod |
+| **Offline Storage** | Dexie (IndexedDB) · Service Worker · vite-plugin-pwa |
+| **Backend** | Cloudflare Workers (TypeScript) |
+| **Database** | Cloudflare D1 (SQLite at the edge) |
+| **Backups** | Cloudflare R2 + D1 Time Travel |
+| **Hosting** | Cloudflare's global edge network |
+
+---
+
+## 🗺️ Architecture at a Glance
 
 ```
-shared/                 Domain rules, types, and Zod schemas (client + worker)
-worker/                 Cloudflare Worker: router, routes/, middleware/, lib/
-db/migrations/          D1 migrations: 0001_init.sql, 0002_seed_columns.sql
-src/                    React PWA: features/, components/, offline/, hooks/, lib/
-public/                 PWA icons, favicon, web manifest
-wrangler.toml.example   Cloudflare Worker + D1 + R2 + assets template
-.dev.vars.example       Local development secrets template
+Browser (React PWA)
+   │
+   │  writes instantly to IndexedDB (Dexie)
+   ▼
+Local-first UI  ──sync when online──►  Cloudflare Worker (API)
+                                             │
+                                             ▼
+                                       Cloudflare D1 (source of truth)
+                                             │
+                                             ▼
+                                  Cloudflare R2 (automated backups)
 ```
+
+One repository. One deployable Worker. No separate backend server, no database
+exposed to the browser — every request is authenticated, authorized, and validated
+at the edge.
 
 ---
 
-## Local Development
+## ⚡ Quick Start
+
+### Prerequisites
+- Node.js 18+
+- A [Cloudflare account](https://dash.cloudflare.com/sign-up) (free tier works)
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/) (`npm i -g wrangler`)
+
+### Local Development
 
 ```bash
-# 1) Install dependencies
+# 1. Clone the repo
+git clone https://github.com/<your-username>/financial-ledger.git
+cd financial-ledger
+
+# 2. Install dependencies
 npm install
 
-# 2) Set up local secrets and configuration
-cp .dev.vars.example .dev.vars
+# 3. Create your local D1 database
+wrangler d1 create financial-ledger-db
+
+# 4. Copy the example config and fill in your own values
 cp wrangler.toml.example wrangler.toml
-# Edit wrangler.toml with your local or test configuration
+cp .dev.vars.example .dev.vars
 
-# 3) Terminal A: Start the local Worker API + D1 at http://127.0.0.1:8787
-npm run dev:worker
+# 5. Run database migrations
+wrangler d1 migrations apply financial-ledger-db --local
 
-# 4) Terminal B: Start Vite development server at http://localhost:5173
-#    (/api requests proxy directly to the Worker on :8787)
+# 6. Start the dev server
 npm run dev
 ```
 
-Build and validation commands:
-
-```bash
-npm run typecheck       # Validate TypeScript types across frontend and worker
-npm run build           # tsc + vite build -> dist/ (served by Worker in production)
-```
+The app will be running locally with hot reload on both the frontend and the Worker.
 
 ---
 
-## Deployment to Cloudflare
+## ☁️ One-Click Deploy to Cloudflare
 
-1. **Create the D1 database**:
-   ```bash
-   npx wrangler d1 create daily_ledger_db
-   ```
-   Copy the generated `database_id` into your `wrangler.toml` under `[[d1_databases]].database_id`.
+Click the button below to deploy your own private instance directly to Cloudflare:
 
-2. **Create the R2 backup bucket (optional)**:
-   ```bash
-   npx wrangler r2 bucket create daily-ledger-backups
-   ```
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/<your-username>/financial-ledger)
 
-3. **Configure deployment secrets**:
-   ```bash
-   npx wrangler secret put SESSION_SIGNING_KEY
-   npx wrangler secret put OWNER_BOOTSTRAP_SECRET
-   # Optional Google OAuth:
-   npx wrangler secret put GOOGLE_OAUTH_CLIENT_ID
-   npx wrangler secret put GOOGLE_OAUTH_CLIENT_SECRET
-   ```
+After deploying, don't forget to:
+1. Create and bind your **D1 database** and **R2 bucket**
+2. Set your secrets: `wrangler secret put SESSION_SIGNING_KEY`, `OWNER_BOOTSTRAP_SECRET`, etc.
+3. Run your migrations against the production database
+4. Log in once as Owner to complete setup
 
-4. **Apply D1 migrations**:
-   ```bash
-   npx wrangler d1 migrations apply daily_ledger_db --remote
-   ```
-
-5. **Deploy application**:
-   ```bash
-   npm run deploy
-   ```
-
-### Provisioning the Initial Owner Account
-
-After deployment, bootstrap the initial Owner account using the bootstrap endpoint and your `OWNER_BOOTSTRAP_SECRET`:
-
-```bash
-curl -X POST https://<your-worker-domain>/api/owner/bootstrap \
-  -H "content-type: application/json" \
-  -d '{
-    "bootstrapSecret": "<OWNER_BOOTSTRAP_SECRET>",
-    "email": "owner@example.com",
-    "password": "<secure-password>",
-    "displayName": "Owner"
-  }'
-```
-
-Once provisioned, access the administration dashboard at `https://<your-worker-domain>/owner/login`.
+Full details in [`/docs/deployment.md`](./docs/deployment.md).
 
 ---
 
-## Offline Synchronization Details
+## 🔒 Security & Privacy
 
-1. **Local persistence**: Edits write directly to Dexie (IndexedDB) with debouncing on text fields and immediate commit on checkboxes, blur, and navigation.
-2. **Operation queue**: Transactions receive deterministic UUIDs and are enqueued as pending sync operations.
-3. **Batch processing**: The sync engine dispatches pending operations to `POST /api/sync/batch` on application foreground, network reconnection, and scheduled intervals.
-4. **Idempotency**: The Worker evaluates `sync_operations` before applying any state modification, ensuring replays never cause data corruption.
-5. **Resilience**: Operates seamlessly in full offline mode and recovers reliably on reconnect across mobile and desktop environments.
+- Passwords are hashed with salted PBKDF2 — never stored in plain text
+- Sessions are server-revocable, HttpOnly, and never exposed to client-side scripts
+- Every API request re-validates ownership — one user can never see another's data
+- No secrets are ever committed to this repository (see `.gitignore` and `*.example` files)
 
 ---
 
-## Security Principles
+## 📌 Project Status
 
-- All session cookies are configured with `HttpOnly; Secure; SameSite=Lax`.
-- Mutation endpoints enforce CSRF double-submit validation via custom request headers.
-- Rate limiting protects authentication and sensitive operations.
-- Zero secrets or credentials are hard-coded; all sensitive keys are injected securely at runtime via Cloudflare Secrets.
+This project is under active development. See the pinned roadmap/issues for what's
+next. Data integrity, security, and offline reliability are always prioritized ahead
+of new features or visual changes.
+
+---
+
+## 🤝 Contributing
+
+This is currently a private/personal project. If collaboration opens up, contribution
+guidelines will be added here.
+
+---
+
+## 📄 License
+
+This project is currently private and not licensed for redistribution. All rights
+reserved unless stated otherwise by the project owner.
+
+---
+
+<div align="center">
+
+**Financial Ledger** — built for people who take their numbers seriously.
+
+</div>
