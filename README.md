@@ -1,6 +1,6 @@
 # 💠 Financial Ledger
 
-### Your private daily trading ledger — fast, offline-first, and built like a real financial product.
+### Your private daily trading ledger fast, offline-first, and built like a real financial product.
 
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/<your-username>/financial-ledger)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-daily--ledger.workers.dev-00c896?style=for-the-badge&logo=cloudflare&logoColor=white)](https://daily-ledger.100coldice.workers.dev)
@@ -18,16 +18,16 @@
 
 ## ✨ What is this?
 
-**Financial Ledger** is a private, mobile-first financial transaction ledger — a modern
+**Financial Ledger** is a private, mobile-first financial transaction ledger a modern
 "daily databook" for anyone who manually tracks daily currency-exchange or trading
 activity and wants something dramatically better than a spreadsheet, without the
 overhead of full accounting software.
 
 Every day gets its own ledger. Every user's data is completely isolated. Every
-transaction autosaves instantly — online or offline — and syncs safely the moment
+transaction autosaves instantly online or offline and syncs safely the moment
 connectivity returns. It's designed to feel like a native financial app, not a website.
 
-> Built for **speed, reliability, and trust** first — visual polish second.
+> Built for **speed, reliability, and trust** first visual polish second.
 > Data integrity always wins over everything else.
 
 ---
@@ -51,34 +51,34 @@ connectivity returns. It's designed to feel like a native financial app, not a w
 ## 🧠 Core Features
 
 ### 📒 The Daily Ledger
-- One dedicated ledger per calendar date — open any day, past or present
+- One dedicated ledger per calendar date open any day, past or present
 - Fast row-based entry: add/delete rows, Tab/Enter keyboard flow, auto-focus
 - Tracks Customer, INR, INR Received, USDT, Final RUB, Extras, Order Done, and Notes
 - A live, always-visible totals bar that recalculates instantly on every edit
-- Mark any day as **Day Off** — reopen it anytime without losing data
+- Mark any day as **Day Off** reopen it anytime without losing data
 
 ### 🔌 Offline-First, Always
-- Every entry is saved locally first — the app works fully with no internet
+- Every entry is saved locally first the app works fully with no internet
 - Automatic, idempotent background sync the moment you're back online
 - Survives closed tabs, browser restarts, and iOS Safari "swipe away"
-- Zero duplicate transactions, zero lost edits — guaranteed by design
+- Zero duplicate transactions, zero lost edits guaranteed by design
 
 ### 📊 Real Analytics, Not Decoration
 - Today / 7 Days / 30 Days / Monthly / All-Time breakdowns
 - Transaction volume trends, extras trends, completion rates
-- Most active days, top customers, currency movement — all computed server-side
+- Most active days, top customers, currency movement all computed server-side
 
 ### 👥 Customers & Timeline
 - A lightweight customer directory with per-customer transaction history
 - A searchable, filterable timeline of your entire trading history, grouped by date
 
 ### 🔐 Private by Design
-- Strict per-user data isolation, enforced at the server — not just the UI
+- Strict per-user data isolation, enforced at the server not just the UI
 - Two distinct roles: **Owner** (administration) and **User** (personal ledger)
 - Every meaningful action is audit-logged
 
 ### 💾 Backup You Can Trust
-- Export your full ledger as PDF, CSV, or JSON — generated entirely in your browser
+- Export your full ledger as PDF, CSV, or JSON generated entirely in your browser
 - Automated Cloudflare R2 backups + D1 Time Travel as a safety net
 - The app never claims a backup succeeded unless it actually did
 
@@ -179,9 +179,9 @@ Full details in [`/docs/deployment.md`](./docs/deployment.md).
 
 ## 🔒 Security & Privacy
 
-- Passwords are hashed with salted PBKDF2 — never stored in plain text
+- Passwords are hashed with salted PBKDF2 never stored in plain text
 - Sessions are server-revocable, HttpOnly, and never exposed to client-side scripts
-- Every API request re-validates ownership — one user can never see another's data
+- Every API request re-validates ownership one user can never see another's data
 - No secrets are ever committed to this repository (see `.gitignore` and `*.example` files)
 
 ---
@@ -196,20 +196,24 @@ of new features or visual changes.
 
 ## 🤝 Contributing
 
-This is currently a private/personal project. If collaboration opens up, contribution
-guidelines will be added here.
+Contributions, improvements, bug fixes, and ideas are welcome. If you'd like to contribute, please open an issue or submit a pull request.
 
 ---
 
 ## 📄 License
 
-This project is currently private and not licensed for redistribution. All rights
-reserved unless stated otherwise by the project owner.
+This project is open source and distributed under the terms of the license included in this repository.
+
+You are free to use, study, modify, and redistribute the project in accordance with the applicable license terms. Please review the `LICENSE` file for the complete permissions, conditions, and limitations.
 
 ---
 
 <div align="center">
 
-**Financial Ledger** — built for people who take their numbers seriously.
+**Financial Ledger** built for people who take their numbers seriously.
+
+<br>
+
+Created & maintained by **𝗔𝘆𝘂𝘀𝗵 𝗞**
 
 </div>
