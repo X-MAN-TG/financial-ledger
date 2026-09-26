@@ -106,6 +106,7 @@ export function mapTransaction(r: Record<string, unknown>): Transaction {
     orderDone: intToBool(r.order_done),
     status: (r.status as Transaction['status']) ?? 'INCOMPLETE',
     note: strOrNull(r.note),
+    attachments: r.attachments ? JSON.parse(String(r.attachments)) : [],
     sortOrder: Number(r.sort_order),
     isDeleted: intToBool(r.is_deleted),
     deletedAt: numOrNull(r.deleted_at),

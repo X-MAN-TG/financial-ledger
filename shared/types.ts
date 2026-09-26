@@ -95,7 +95,11 @@ export interface LedgerDay {
 /** Custom (owner-defined) column values for one transaction: key -> value. */
 export type CustomValues = Record<string, string | null>;
 
+export interface NoteAttachment { id: string; name: string; type: string; dataUrl: string; }
+
 export interface Transaction {
+  /** Up to five persisted image data URLs attached to the note. */
+  attachments: NoteAttachment[];
   id: string;
   userId: string;
   ledgerDayId: string;
