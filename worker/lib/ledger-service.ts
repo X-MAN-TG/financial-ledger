@@ -484,6 +484,7 @@ export async function applyUpdate(
     extrasAmount: input.extrasAmount !== undefined ? input.extrasAmount : current.extrasAmount,
     orderDone: input.orderDone !== undefined ? input.orderDone : current.orderDone,
     note: input.note !== undefined ? input.note : current.note,
+    attachments: input.attachments !== undefined ? input.attachments : current.attachments,
     srNumber: input.srNumber !== undefined ? input.srNumber : current.srNumber,
     sortOrder: input.sortOrder !== undefined ? input.sortOrder : current.sortOrder,
   };
