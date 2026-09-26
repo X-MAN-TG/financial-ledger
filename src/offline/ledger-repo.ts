@@ -53,6 +53,7 @@ function blankTransaction(
     orderDone: false,
     status: 'INCOMPLETE',
     note: null,
+    attachments: [],
     sortOrder,
     isDeleted: false,
     deletedAt: null,
@@ -239,7 +240,8 @@ export type EditableField =
   | 'finalRubAmount'
   | 'extrasAmount'
   | 'orderDone'
-  | 'note';
+  | 'note'
+  | 'attachments';
 
 /**
  * Apply a field edit: write locally, recompute the derived status with the

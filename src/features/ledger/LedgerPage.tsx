@@ -349,8 +349,8 @@ export function LedgerPage() {
       <NoteSheet
         row={noteRow}
         onClose={() => setNoteRow(null)}
-        onSave={(note) => {
-          if (noteRow) handleEdit(noteRow.id, { note });
+        onSave={(note, attachments) => {
+          if (noteRow) handleEdit(noteRow.id, { note, attachments });
           setNoteRow(null);
         }}
       />

@@ -317,9 +317,9 @@ export async function applyCreate(
       `INSERT INTO transactions (
          id, user_id, ledger_day_id, sr_number, customer_id, customer_name_snapshot,
          inr_amount, inr_received, usdt_amount, final_rub_amount, extras_amount,
-         order_done, status, note, sort_order, is_deleted, deleted_at,
+         order_done, status, note, attachments, sort_order, is_deleted, deleted_at,
          created_at, updated_at, client_created_at, sync_version)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?, ?, 1)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?, ?, 1)`,
       [
         input.id,
         userId,
@@ -335,6 +335,7 @@ export async function applyCreate(
         boolToInt(orderDone),
         status,
         input.note ?? null,
+        JSON.stringify(input.attachments ?? []),
         input.sortOrder,
         now,
         now,
@@ -552,7 +553,7 @@ export async function applyUpdate(
       `UPDATE transactions SET
          customer_id = ?, customer_name_snapshot = ?, inr_amount = ?, inr_received = ?,
          usdt_amount = ?, final_rub_amount = ?, extras_amount = ?, order_done = ?,
-         status = ?, note = ?, sr_number = ?, sort_order = ?,
+         status = ?, note = ?, attachments = ?, sr_number = ?, sort_order = ?,
          updated_at = ?, sync_version = sync_version + 1
        WHERE id = ? AND user_id = ?`,
       [
@@ -566,6 +567,7 @@ export async function applyUpdate(
         boolToInt(orderDone),
         status,
         next.note,
+        JSON.stringify(next.attachments ?? []),
         next.srNumber,
         next.sortOrder,
         now,

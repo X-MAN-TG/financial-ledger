@@ -170,6 +170,7 @@ export const transactionCreateSchema = z.object({
     .nullable()
     .optional()
     .transform((v) => (v === '' ? null : (v ?? null))),
+  attachments: z.array(z.object({ id: uuidSchema, name: z.string().max(200), type: z.string().regex(/^image\//), dataUrl: z.string().regex(/^data:image\/(png|jpeg|webp);base64,/).max(8_000_000) })).max(5).default([]),
   sortOrder: z.number().int(),
   clientCreatedAt: z.number().int().positive(),
   customValues: z.record(z.string(), z.string().max(5000).nullable()).optional(),
@@ -199,6 +200,7 @@ export const transactionUpdateSchema = z.object({
     .nullable()
     .optional()
     .transform((v) => (v === '' ? null : v)),
+  attachments: z.array(z.object({ id: uuidSchema, name: z.string().max(200), type: z.string().regex(/^image\//), dataUrl: z.string().regex(/^data:image\/(png|jpeg|webp);base64,/).max(8_000_000) })).max(5).default([]),
   srNumber: z.number().int().min(1).max(100000).optional(),
   sortOrder: z.number().int().optional(),
   customValues: z.record(z.string(), z.string().max(5000).nullable()).optional(),
