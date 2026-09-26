@@ -88,6 +88,9 @@ export interface LedgerDay {
   /** 'YYYY-MM-DD' in the user's local time zone. */
   date: string;
   status: LedgerDayStatus;
+  note?: string | null;
+  attachments?: NoteAttachment[];
+  usdtRate?: number | null;
   createdAt: number;
   updatedAt: number;
 }

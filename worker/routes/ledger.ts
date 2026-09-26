@@ -2,14 +2,14 @@
  * Ledger day routes (05 section 4, 06-daily-ledger-specification.txt).
  */
 import { computeTotals } from '../../shared/business-rules';
-import { dateKeySchema, ledgerDayRangeSchema } from '../../shared/validation';
+import { dateKeySchema, ledgerDayRangeSchema, ledgerDayUpdateSchema } from '../../shared/validation';
 import type { Env } from '../lib/config';
 import { auditStatement } from '../lib/audit';
 import { batch, mapLedgerDay, queryAll, queryFirst, stmt } from '../lib/db';
 import { badRequest, json, notFound } from '../lib/http';
 import { attachCustomValues, ensureLedgerDay, listDayTransactions } from '../lib/ledger-service';
 import type { SessionContext } from '../middleware/auth';
-import { parseQuery, parseWith } from '../middleware/validation';
+import { parseBody, parseQuery, parseWith } from '../middleware/validation';
 
 /**
  * GET /api/ledger-days/:date
@@ -168,3 +168,38 @@ export async function listLedgerDays(
     })),
   });
 }
+
+export async function updateLedgerDay(
+  req: Request,
+  env: Env,
+  session: SessionContext,
+  rawDate: string,
+): Promise<Response> {
+  const date = parseWith(dateKeySchema, rawDate);
+  const day = await ensureLedgerDay(env, session.userId, date);
+  const body = await parseBody(req, ledgerDayUpdateSchema);
+  const now = Date.now();
+
+  const nextStatus = body.status ?? day.status;
+  const nextNote = body.note !== undefined ? body.note : (day.note ?? null);
+  const nextAttachments =
+    body.attachments !== undefined ? body.attachments : (day.attachments ?? []);
+  const nextUsdtRate =
+    body.usdtRate !== undefined ? body.usdtRate : (day.usdtRate ?? 0);
+
+  const { execute } = await import('../lib/db');
+  await execute(
+    env,
+    'UPDATE ledger_days SET status = ?, note = ?, attachments = ?, usdt_rate = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+    [nextStatus, nextNote, JSON.stringify(nextAttachments), nextUsdtRate, now, day.id, session.userId],
+  );
+
+  const row = await queryFirst<Record<string, unknown>>(
+    env,
+    'SELECT * FROM ledger_days WHERE id = ?',
+    [day.id],
+  );
+  if (!row) throw notFound('Ledger day not found');
+  return json({ ledgerDay: mapLedgerDay(row) });
+}
+

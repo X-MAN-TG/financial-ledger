@@ -143,6 +143,15 @@ export const settingsUpdateSchema = z
 
 /* -------------------------------------------------------- transactions ---- */
 
+export const noteAttachmentSchema = z.object({
+  id: uuidSchema,
+  name: z.string().max(200),
+  type: z.string().regex(/^image\//),
+  dataUrl: z.string().max(8_000_000),
+});
+
+export const noteAttachmentsSchema = z.array(noteAttachmentSchema).max(5).default([]);
+
 /** Fields a client may send when creating a transaction (05 section 5). */
 export const transactionCreateSchema = z.object({
   operationId: uuidSchema,
@@ -170,7 +179,7 @@ export const transactionCreateSchema = z.object({
     .nullable()
     .optional()
     .transform((v) => (v === '' ? null : (v ?? null))),
-  attachments: z.array(z.object({ id: uuidSchema, name: z.string().max(200), type: z.string().regex(/^image\//), dataUrl: z.string().regex(/^data:image\/(png|jpeg|webp);base64,/).max(8_000_000) })).max(5).default([]),
+  attachments: noteAttachmentsSchema,
   sortOrder: z.number().int(),
   clientCreatedAt: z.number().int().positive(),
   customValues: z.record(z.string(), z.string().max(5000).nullable()).optional(),
@@ -200,7 +209,7 @@ export const transactionUpdateSchema = z.object({
     .nullable()
     .optional()
     .transform((v) => (v === '' ? null : v)),
-  attachments: z.array(z.object({ id: uuidSchema, name: z.string().max(200), type: z.string().regex(/^image\//), dataUrl: z.string().regex(/^data:image\/(png|jpeg|webp);base64,/).max(8_000_000) })).max(5).default([]),
+  attachments: noteAttachmentsSchema.optional(),
   srNumber: z.number().int().min(1).max(100000).optional(),
   sortOrder: z.number().int().optional(),
   customValues: z.record(z.string(), z.string().max(5000).nullable()).optional(),
@@ -219,6 +228,16 @@ export const ledgerDayCreateSchema = z.object({
   id: uuidSchema,
   date: dateKeySchema,
   status: z.enum(LEDGER_DAY_STATUSES).default('TRADING_DAY'),
+  note: z.string().max(LIMITS.noteMax).nullable().optional(),
+  attachments: noteAttachmentsSchema.optional(),
+  usdtRate: z.number().nonnegative().nullable().optional(),
+});
+
+export const ledgerDayUpdateSchema = z.object({
+  status: z.enum(LEDGER_DAY_STATUSES).optional(),
+  note: z.string().max(LIMITS.noteMax).nullable().optional(),
+  attachments: noteAttachmentsSchema.optional(),
+  usdtRate: z.number().nonnegative().nullable().optional(),
 });
 
 export const ledgerDayRangeSchema = z.object({
@@ -335,6 +354,9 @@ export const importPayloadSchema = z.object({
         id: uuidSchema,
         date: dateKeySchema,
         status: z.enum(LEDGER_DAY_STATUSES),
+        note: z.string().max(LIMITS.noteMax).nullable().optional(),
+        attachments: noteAttachmentsSchema.optional(),
+        usdtRate: z.number().nonnegative().nullable().optional(),
         createdAt: z.number().int().positive(),
         updatedAt: z.number().int().positive(),
       }),

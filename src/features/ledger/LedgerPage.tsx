@@ -30,11 +30,14 @@ import {
   openLedgerDay,
   listDayRows,
   setDayStatus,
+  updateDayDetails,
   updateRow,
 } from '../../offline/ledger-repo';
+import type { NoteAttachment } from '../../../shared/types';
 import { LedgerTable } from './LedgerTable';
 import { TotalsBar } from './TotalsBar';
 import { NoteSheet } from './NoteSheet';
+import { DayFooterControls } from './DayFooterControls';
 import { CustomerPicker } from './CustomerPicker';
 import { DatePicker } from './DatePicker';
 
@@ -49,6 +52,7 @@ export function LedgerPage() {
   const [dayError, setDayError] = useState<string | null>(null);
   const [columns, setColumns] = useState<ColumnDefinition[]>([]);
   const [noteRow, setNoteRow] = useState<LocalTransaction | null>(null);
+  const [dayNoteOpen, setDayNoteOpen] = useState(false);
   const [pickerState, setPickerState] = useState<{ row: LocalTransaction; anchor: HTMLElement } | null>(null);
   const [confirmDayOff, setConfirmDayOff] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
@@ -164,6 +168,26 @@ export function LedgerPage() {
     });
   }, [db, user, day, toast]);
 
+  const handleUpdateUsdtRate = useCallback(
+    (rate: number) => {
+      if (!db || !day) return;
+      void updateDayDetails(db, day, { usdtRate: rate }).catch(() =>
+        toast({ title: 'Could not save USDT rate', tone: 'danger' }),
+      );
+    },
+    [db, day, toast],
+  );
+
+  const handleSaveDayNote = useCallback(
+    (note: string | null, attachments: NoteAttachment[]) => {
+      if (!db || !day) return;
+      void updateDayDetails(db, day, { note, attachments })
+        .then(() => toast({ title: 'Day note updated', tone: 'success' }))
+        .catch(() => toast({ title: 'Could not save day note', tone: 'danger' }));
+    },
+    [db, day, toast],
+  );
+
   const handleDownloadPdf = useCallback(async () => {
     setExportingPdf(true);
     try {
@@ -263,6 +287,26 @@ export function LedgerPage() {
           </PillButton>
           <PillButton
             size="sm"
+            variant={day?.note || (day?.attachments && day.attachments.length > 0) ? 'primary' : 'secondary'}
+            icon={
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+            }
+            onClick={() => setDayNoteOpen(true)}
+            title="Open Day Note & Closing Media"
+          >
+            Day Note
+            {(day?.note || (day?.attachments && day.attachments.length > 0)) && (
+              <span className="ml-1 h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+            )}
+          </PillButton>
+          <PillButton
+            size="sm"
             variant="secondary"
             icon={isDayOff ? <IcPlay size={14} /> : <IcPause size={14} />}
             onClick={() => (isDayOff ? void handleDayOff() : setConfirmDayOff(true))}
@@ -339,19 +383,53 @@ export function LedgerPage() {
             </div>
           )}
 
-          {/* Sticky totals bar: reachable without scrolling to the bottom */}
-          <div className="sticky bottom-[calc(var(--bottomnav-h)+8px)] lg:bottom-4 z-20 mt-4 no-print">
+          {/* Daily Totals Bar */}
+          <div className="mt-4 no-print">
             <TotalsBar totals={totals} pendingSync={pendingSync} />
           </div>
+
+          {/* Day Footer Controls: USDT Rate box and Day Closing Note & Media box (kept below totals) */}
+          <DayFooterControls
+            day={day ?? null}
+            readOnly={isDayOff}
+            onUpdateUsdtRate={handleUpdateUsdtRate}
+            onOpenDayNote={() => setDayNoteOpen(true)}
+          />
         </>
       )}
 
+      {/* When 0 transactions exist on this day, still show DayFooterControls below the empty state */}
+      {!loading && !dayError && displayRows.length === 0 && day && (
+        <DayFooterControls
+          day={day}
+          readOnly={isDayOff}
+          onUpdateUsdtRate={handleUpdateUsdtRate}
+          onOpenDayNote={() => setDayNoteOpen(true)}
+        />
+      )}
+
+      {/* Row Note Sheet */}
       <NoteSheet
         row={noteRow}
         onClose={() => setNoteRow(null)}
         onSave={(note, attachments) => {
           if (noteRow) handleEdit(noteRow.id, { note, attachments });
           setNoteRow(null);
+        }}
+      />
+
+      {/* Common Day Note Sheet */}
+      <NoteSheet
+        open={dayNoteOpen}
+        title={`Day Note · ${formatDateMedium(date)}`}
+        description="Final day closing, handover summary, or important notes with up to 5 screenshots."
+        initialNote={day?.note ?? ''}
+        initialAttachments={day?.attachments ?? []}
+        placeholder="Add day closing summary, reconciliation details, or important reminders for today…"
+        onClose={() => setDayNoteOpen(false)}
+        onSave={(note, attachments) => {
+          handleSaveDayNote(note, attachments);
+          setDayNoteOpen(false);
         }}
       />
 

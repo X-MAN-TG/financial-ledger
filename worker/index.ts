@@ -29,7 +29,7 @@ import {
   handleSignup,
 } from './routes/auth';
 import { getProfile, patchProfile, patchSettings, putAvatar } from './routes/profile';
-import { getLedgerDay, listLedgerDays, reopenDay, setDayOff } from './routes/ledger';
+import { getLedgerDay, listLedgerDays, reopenDay, setDayOff, updateLedgerDay } from './routes/ledger';
 import {
   createTransaction,
   deleteTransaction,
@@ -195,6 +195,7 @@ async function routeApi(req: Request, env: Env, url: URL): Promise<Response> {
     }
     let m = match(pathname, '/api/ledger-days/:p');
     if (m && method === 'GET') return getLedgerDay(env, session, m[0]);
+    if (m && method === 'PATCH') return updateLedgerDay(req, env, session, m[0]);
     m = match(pathname, '/api/ledger-days/:p/day-off');
     if (m && method === 'POST') return setDayOff(env, session, m[0]);
     m = match(pathname, '/api/ledger-days/:p/reopen');

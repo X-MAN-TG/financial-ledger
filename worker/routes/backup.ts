@@ -243,6 +243,9 @@ export async function exportAll(env: Env, session: SessionContext): Promise<Resp
         id: day.id,
         date: day.date,
         status: day.status,
+        note: day.note ?? null,
+        attachments: day.attachments ?? [],
+        usdtRate: day.usdtRate ?? 0,
         createdAt: day.createdAt,
         updatedAt: day.updatedAt,
       };
@@ -393,10 +396,13 @@ export async function importBackup(
     statements.push(
       stmt(
         env,
-        `INSERT INTO ledger_days (id, user_id, date, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)
-         ON CONFLICT(user_id, date) DO NOTHING`,
-        [d.id, session.userId, d.date, d.status, d.createdAt, d.updatedAt],
+        `INSERT INTO ledger_days (id, user_id, date, status, note, attachments, usdt_rate, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(user_id, date) DO UPDATE SET
+           note = COALESCE(excluded.note, ledger_days.note),
+           attachments = COALESCE(excluded.attachments, ledger_days.attachments),
+           usdt_rate = COALESCE(excluded.usdt_rate, ledger_days.usdt_rate)`,
+        [d.id, session.userId, d.date, d.status, d.note ?? null, JSON.stringify(d.attachments ?? []), d.usdtRate ?? 0, d.createdAt, d.updatedAt],
       ),
     );
     daysInserted += 1;

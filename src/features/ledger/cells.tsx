@@ -207,33 +207,42 @@ export const TextCell = memo(function TextCell({
  */
 export const NoteButton = memo(function NoteButton({
   hasNote,
+  hasAttachments,
   onClick,
   buttonRef,
 }: {
   hasNote: boolean;
+  hasAttachments?: boolean;
   onClick: () => void;
   buttonRef?: React.Ref<HTMLButtonElement>;
 }) {
+  const active = hasNote || Boolean(hasAttachments);
   return (
     <button
       ref={buttonRef}
       type="button"
       onClick={onClick}
-      aria-label={hasNote ? 'Edit note' : 'Add note'}
-      title={hasNote ? 'Edit note' : 'Add note'}
+      aria-label={active ? 'Edit note & media' : 'Add note'}
+      title={hasAttachments ? 'Note with screenshots attached' : active ? 'Edit note' : 'Add note'}
       className={cn(
         'relative inline-grid place-items-center h-9 w-9 rounded-md transition-all duration-150',
         'border',
-        hasNote
+        active
           ? 'text-[var(--accent)] bg-[var(--accent-soft)] border-[var(--accent)]'
           : 'text-[var(--text-3)] hover:text-[var(--text-2)] hover:bg-[var(--surface-2)] border-[var(--border)]',
       )}
     >
-      <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M4 5.5A1.5 1.5 0 015.5 4h13A1.5 1.5 0 0120 5.5v8.7a1.5 1.5 0 01-.44 1.06l-3.3 3.3a1.5 1.5 0 01-1.06.44H5.5A1.5 1.5 0 014 17.5v-12z" />
-        <path d="M8 9h8M8 12.5h5" strokeLinecap="round" />
-      </svg>
-      {hasNote && (
+      {hasAttachments ? (
+        <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M4 5.5A1.5 1.5 0 015.5 4h13A1.5 1.5 0 0120 5.5v8.7a1.5 1.5 0 01-.44 1.06l-3.3 3.3a1.5 1.5 0 01-1.06.44H5.5A1.5 1.5 0 014 17.5v-12z" />
+          <path d="M8 9h8M8 12.5h5" strokeLinecap="round" />
+        </svg>
+      )}
+      {active && (
         <span
           aria-hidden
           className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full"

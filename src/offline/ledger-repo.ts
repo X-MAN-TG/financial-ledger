@@ -17,6 +17,7 @@ import type {
   LocalCustomer,
   LocalLedgerDay,
   LocalTransaction,
+  NoteAttachment,
   Transaction,
 } from '../../shared/types';
 import { ApiError, apiGet } from '../lib/api';
@@ -104,9 +105,25 @@ export async function openLedgerDay(
         `/api/ledger-days/${date}`,
       );
       fromCache = false;
+      const existingLocal = day;
+      const isLocalPending =
+        existingLocal?.syncStatus === 'PENDING_SYNC' || existingLocal?.syncStatus === 'LOCAL_ONLY';
       const serverDay: LocalLedgerDay = {
         ...res.ledgerDay,
-        syncStatus: 'SYNCED',
+        status: isLocalPending && existingLocal ? existingLocal.status : res.ledgerDay.status,
+        note:
+          isLocalPending && existingLocal && existingLocal.note !== undefined
+            ? existingLocal.note
+            : (res.ledgerDay.note ?? null),
+        attachments:
+          isLocalPending && existingLocal && existingLocal.attachments !== undefined
+            ? existingLocal.attachments
+            : (res.ledgerDay.attachments ?? []),
+        usdtRate:
+          isLocalPending && existingLocal && existingLocal.usdtRate !== undefined
+            ? existingLocal.usdtRate
+            : (res.ledgerDay.usdtRate ?? 0),
+        syncStatus: isLocalPending && existingLocal ? existingLocal.syncStatus : 'SYNCED',
         serverConfirmedAt: Date.now(),
         lastSyncError: null,
       };
@@ -170,6 +187,9 @@ export async function openLedgerDay(
       userId,
       date,
       status: 'TRADING_DAY',
+      note: null,
+      attachments: [],
+      usdtRate: 0,
       createdAt: now,
       updatedAt: now,
       syncStatus: 'LOCAL_ONLY',
@@ -341,6 +361,25 @@ export async function setDayStatus(
   nudgeSync();
   // Reopening a previously empty day gets the standard seed (06 s3.4).
   if (status === 'TRADING_DAY') await seedIfNeeded(db, userId, next);
+  return next;
+}
+
+export async function updateDayDetails(
+  db: LedgerDexie,
+  day: LocalLedgerDay,
+  patch: { note?: string | null; attachments?: NoteAttachment[]; usdtRate?: number | null },
+): Promise<LocalLedgerDay> {
+  const next: LocalLedgerDay = {
+    ...day,
+    note: patch.note !== undefined ? patch.note : (day.note ?? null),
+    attachments: patch.attachments !== undefined ? patch.attachments : (day.attachments ?? []),
+    usdtRate: patch.usdtRate !== undefined ? patch.usdtRate : (day.usdtRate ?? 0),
+    updatedAt: Date.now(),
+    syncStatus: 'PENDING_SYNC',
+  };
+  await db.ledgerDays.put(next);
+  await enqueue(db, 'ledgerDay', day.id, 'UPDATE');
+  nudgeSync();
   return next;
 }
 

@@ -436,6 +436,7 @@ const LedgerRow = memo(function LedgerRow({
           <NoteButton
             buttonRef={noteRef}
             hasNote={Boolean(row.note && row.note.trim())}
+            hasAttachments={Boolean(row.attachments && row.attachments.length > 0)}
             onClick={() => noteRef.current && onOpenNote(row, noteRef.current)}
           />
           {!readOnly && (

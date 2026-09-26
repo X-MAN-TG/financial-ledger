@@ -287,7 +287,14 @@ export class SyncEngine {
             operationId: item.operationId,
             type: item.type,
             entity: 'ledgerDay',
-            payload: { id: day.id, date: day.date, status: day.status },
+            payload: {
+              id: day.id,
+              date: day.date,
+              status: day.status,
+              note: day.note ?? null,
+              attachments: day.attachments ?? [],
+              usdtRate: day.usdtRate ?? 0,
+            },
           },
         });
         continue;

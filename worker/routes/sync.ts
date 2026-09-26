@@ -214,25 +214,42 @@ async function applyOne(
     }
     const day = await ensureLedgerDay(env, session.userId, parsed.data.date, parsed.data.id);
 
-    // A locally-flipped DAY_OFF/TRADING_DAY status must also be synced.
-    if (parsed.data.status !== day.status) {
+    // Sync any changes to status, note, attachments, or usdtRate.
+    const hasStatusChange = parsed.data.status !== day.status;
+    const hasNoteChange = parsed.data.note !== undefined && parsed.data.note !== day.note;
+    const hasAttachmentsChange =
+      parsed.data.attachments !== undefined &&
+      JSON.stringify(parsed.data.attachments) !== JSON.stringify(day.attachments ?? []);
+    const hasUsdtRateChange =
+      parsed.data.usdtRate !== undefined && parsed.data.usdtRate !== day.usdtRate;
+
+    if (hasStatusChange || hasNoteChange || hasAttachmentsChange || hasUsdtRateChange) {
       const now = Date.now();
+      const nextStatus = parsed.data.status ?? day.status;
+      const nextNote = parsed.data.note !== undefined ? parsed.data.note : (day.note ?? null);
+      const nextAttachments =
+        parsed.data.attachments !== undefined ? parsed.data.attachments : (day.attachments ?? []);
+      const nextUsdtRate =
+        parsed.data.usdtRate !== undefined ? parsed.data.usdtRate : (day.usdtRate ?? 0);
+
       const { execute } = await import('../lib/db');
       await execute(
         env,
-        'UPDATE ledger_days SET status = ?, updated_at = ? WHERE id = ? AND user_id = ?',
-        [parsed.data.status, now, day.id, session.userId],
+        'UPDATE ledger_days SET status = ?, note = ?, attachments = ?, usdt_rate = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+        [nextStatus, nextNote, JSON.stringify(nextAttachments), nextUsdtRate, now, day.id, session.userId],
       );
-      await writeAudit(env, {
-        userId: session.userId,
-        actorRole: 'USER',
-        action: parsed.data.status === 'DAY_OFF' ? 'DAY_MARKED_OFF' : 'DAY_REOPENED',
-        resourceType: 'ledger_day',
-        resourceId: day.id,
-        scope: 'USER',
-        result: 'SUCCESS',
-        metadata: { date: parsed.data.date, via: 'SYNC' },
-      });
+      if (hasStatusChange) {
+        await writeAudit(env, {
+          userId: session.userId,
+          actorRole: 'USER',
+          action: parsed.data.status === 'DAY_OFF' ? 'DAY_MARKED_OFF' : 'DAY_REOPENED',
+          resourceType: 'ledger_day',
+          resourceId: day.id,
+          scope: 'USER',
+          result: 'SUCCESS',
+          metadata: { date: parsed.data.date, via: 'SYNC' },
+        });
+      }
       const fresh = await queryFirst<Record<string, unknown>>(
         env,
         'SELECT * FROM ledger_days WHERE id = ?',

@@ -84,6 +84,9 @@ export function mapLedgerDay(r: Record<string, unknown>): LedgerDay {
     userId: String(r.user_id),
     date: String(r.date),
     status: r.status === 'DAY_OFF' ? 'DAY_OFF' : 'TRADING_DAY',
+    note: strOrNull(r.note),
+    attachments: r.attachments ? JSON.parse(String(r.attachments)) : [],
+    usdtRate: r.usdt_rate !== null && r.usdt_rate !== undefined ? Number(r.usdt_rate) : 0,
     createdAt: Number(r.created_at),
     updatedAt: Number(r.updated_at),
   };

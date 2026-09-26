@@ -112,8 +112,8 @@ export async function ensureLedgerDay(
   const now = Date.now();
   const id = preferredId ?? newId();
   await env.DB.prepare(
-    `INSERT INTO ledger_days (id, user_id, date, status, created_at, updated_at)
-     VALUES (?, ?, ?, 'TRADING_DAY', ?, ?)
+    `INSERT INTO ledger_days (id, user_id, date, status, note, attachments, usdt_rate, created_at, updated_at)
+     VALUES (?, ?, ?, 'TRADING_DAY', NULL, '[]', 0, ?, ?)
      ON CONFLICT(user_id, date) DO NOTHING`,
   )
     .bind(id, userId, date, now, now)
