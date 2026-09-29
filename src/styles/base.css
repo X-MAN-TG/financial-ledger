@@ -2,7 +2,7 @@
    after other statements, which silently kills the whole theme token set. */
 @import '@fontsource-variable/plus-jakarta-sans';
 @import '@fontsource-variable/inter';
-@import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource-variable/manrope';
 @import './themes.css';
 
 @tailwind base;
@@ -41,12 +41,50 @@
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
-  /* Financial figures and numerical values always use tabular, aligned numerals (16 s9) */
+  /* Financial figures and numerical values use Manrope with tabular figures for digits (column alignment) while currency symbols (₹ $ ₽) and decimal points remain tight and natural */
   .num, [data-numeric], .tabular-nums {
     font-family: var(--font-numeric);
-    font-variant-numeric: tabular-nums lining-nums;
-    font-feature-settings: 'tnum' 1, 'lnum' 1, 'zero' 1;
-    letter-spacing: -0.02em;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  /* Table cells: strictly weight 600 */
+  table .num,
+  td .num,
+  input.num,
+  [data-cell],
+  .ledger-row .num {
+    font-weight: 600 !important;
+  }
+
+  /* Hero numbers, totals bar, stat cards, and analytics metrics: weight 700 */
+  .elevated-glass .num,
+  [aria-label="Daily totals"] .num,
+  .num.text-\[18px\],
+  .num.text-\[19px\],
+  .num.text-\[21px\],
+  .num.text-\[24px\],
+  .num.text-\[26px\],
+  .num.text-\[32px\],
+  .num.text-lg,
+  .num.text-xl,
+  .num.text-2xl,
+  .num.text-3xl,
+  .num.text-4xl,
+  .card .num:not(table .num),
+  [data-hero] .num,
+  .num[data-hero] {
+    font-weight: 700 !important;
+  }
+
+  /* SVG / Recharts numeric text elements */
+  .recharts-cartesian-axis-tick text,
+  .recharts-legend-item-text,
+  .recharts-tooltip-item-value {
+    font-family: var(--font-numeric);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
   }
 
   /* Universal input/editable surface baseline: subtle visible border at rest, gentle hover, vibrant focus */

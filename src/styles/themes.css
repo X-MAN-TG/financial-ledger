@@ -33,7 +33,7 @@
   --font-display: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', sans-serif;
   --font-sans: 'Inter Variable', 'Inter', sans-serif;
   /* Tabular figures keep columns of numbers optically aligned without width wobble (16 s9). */
-  --font-numeric: 'JetBrains Mono Variable', 'JetBrains Mono', monospace;
+  --font-numeric: 'Manrope', 'Manrope Variable', sans-serif;
 
   --header-h: 60px;
   --bottomnav-h: 64px;
