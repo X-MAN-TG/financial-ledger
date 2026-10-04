@@ -25,6 +25,7 @@ import {
   handleLogout,
   handleOwnerBootstrap,
   handleOwnerLogin,
+  handleResetPassword,
   handleSessionInfo,
   handleSignup,
 } from './routes/auth';
@@ -112,6 +113,8 @@ async function routeApi(req: Request, env: Env, url: URL): Promise<Response> {
   }
   if (pathname === '/api/auth/signup' && method === 'POST') return handleSignup(req, env, url);
   if (pathname === '/api/auth/login' && method === 'POST') return handleLogin(req, env, url);
+  if (pathname === '/api/auth/reset-password' && method === 'POST')
+    return handleResetPassword(req, env, url);
   if (pathname === '/api/auth/logout' && method === 'POST') return handleLogout(req, env, url);
   if (pathname === '/api/auth/session' && method === 'GET') return handleSessionInfo(req, env);
   if (pathname === '/api/auth/google/start' && method === 'GET') {

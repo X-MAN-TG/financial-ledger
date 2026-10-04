@@ -13,7 +13,7 @@ import {
 import { auditStatement, writeAudit } from '../lib/audit';
 import type { Env } from '../lib/config';
 import { getMaxUsers } from '../lib/config';
-import { newId } from '../lib/crypto';
+import { hashPassword, newId } from '../lib/crypto';
 import {
   batch,
   boolToInt,
@@ -112,34 +112,64 @@ export async function ownerUpdateUser(
   }
 
   const now = Date.now();
-  const statements = [
-    stmt(env, 'UPDATE users SET status = ?, updated_at = ? WHERE id = ?', [
-      body.status,
-      now,
-      userId,
-    ]),
-    auditStatement(
-      env,
-      {
-        userId: session.userId,
-        actorRole: 'OWNER',
-        action: body.status === 'ACTIVE' ? 'USER_REACTIVATED' : 'USER_DEACTIVATED',
-        resourceType: 'user',
-        resourceId: userId,
-        scope: 'GLOBAL',
-        result: 'SUCCESS',
-        metadata: { status: body.status },
-      },
-      now,
-    ),
-  ];
-  // Revoke live sessions so a disabled user is logged out immediately.
-  if (body.status === 'DISABLED') {
-    statements.push(stmt(env, 'DELETE FROM sessions WHERE user_id = ?', [userId]));
+  const statements: ReturnType<typeof stmt>[] = [];
+
+  if (body.status) {
+    statements.push(
+      stmt(env, 'UPDATE users SET status = ?, updated_at = ? WHERE id = ?', [
+        body.status,
+        now,
+        userId,
+      ]),
+      auditStatement(
+        env,
+        {
+          userId: session.userId,
+          actorRole: 'OWNER',
+          action: body.status === 'ACTIVE' ? 'USER_REACTIVATED' : 'USER_DEACTIVATED',
+          resourceType: 'user',
+          resourceId: userId,
+          scope: 'GLOBAL',
+          result: 'SUCCESS',
+          metadata: { status: body.status },
+        },
+        now,
+      ),
+    );
+    // Revoke live sessions so a disabled user is logged out immediately.
+    if (body.status === 'DISABLED') {
+      statements.push(stmt(env, 'DELETE FROM sessions WHERE user_id = ?', [userId]));
+    }
   }
+
+  if (body.password) {
+    const hash = await hashPassword(body.password);
+    statements.push(
+      stmt(
+        env,
+        "UPDATE users SET password_hash = ?, auth_provider = CASE WHEN google_sub IS NOT NULL THEN 'BOTH' ELSE 'PASSWORD' END, updated_at = ? WHERE id = ?",
+        [hash, now, userId],
+      ),
+      stmt(env, 'DELETE FROM sessions WHERE user_id = ?', [userId]),
+      auditStatement(
+        env,
+        {
+          userId: session.userId,
+          actorRole: 'OWNER',
+          action: 'USER_PASSWORD_RESET',
+          resourceType: 'user',
+          resourceId: userId,
+          scope: 'GLOBAL',
+          result: 'SUCCESS',
+        },
+        now,
+      ),
+    );
+  }
+
   await batch(env, statements);
 
-  return json({ ok: true, id: userId, status: body.status });
+  return json({ ok: true, id: userId, status: body.status ?? target.status });
 }
 
 /** DELETE = soft deactivation by default (04 section 6.3, 11 section 2.4). */

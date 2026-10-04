@@ -85,6 +85,28 @@ export function OwnerUsers() {
       toast({ title: 'Purge failed', description: e instanceof ApiError ? e.message : undefined, tone: 'danger' }),
   });
 
+  const [resetTarget, setResetTarget] = useState<OwnerUserRow | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetError, setResetError] = useState<string | null>(null);
+
+  const resetPasswordMut = useMutation({
+    mutationFn: ({ id, password }: { id: string; password: string }) =>
+      apiPatch(`/api/owner/users/${id}`, { password }),
+    onSuccess: () => {
+      invalidate();
+      setResetTarget(null);
+      setNewPassword('');
+      toast({
+        title: 'Password updated',
+        description: 'New password has been set. Share it securely with the user.',
+        tone: 'success',
+      });
+    },
+    onError: (e) => {
+      setResetError(e instanceof ApiError ? e.message : 'Could not update password');
+    },
+  });
+
   const atCapacity = data ? data.userCount >= data.maxUsers : false;
 
   return (
@@ -155,6 +177,17 @@ export function OwnerUsers() {
                   <Button
                     size="sm"
                     variant="secondary"
+                    onClick={() => {
+                      setResetTarget(u);
+                      setNewPassword('');
+                      setResetError(null);
+                    }}
+                  >
+                    Reset Password
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
                     loading={setStatus.isPending && setStatus.variables?.id === u.id}
                     onClick={() =>
                       setStatus.mutate({
@@ -182,6 +215,71 @@ export function OwnerUsers() {
         submitting={create.isPending}
         error={create.error instanceof ApiError ? create.error.message : null}
       />
+
+      {/* Reset Password Modal */}
+      <Modal
+        open={Boolean(resetTarget)}
+        onClose={() => {
+          setResetTarget(null);
+          setNewPassword('');
+          setResetError(null);
+        }}
+        title={`Reset password for ${resetTarget?.displayName || resetTarget?.email}`}
+        description="Enter a new password for this user. Their existing sessions will be logged out immediately."
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              data-close
+              onClick={() => {
+                setResetTarget(null);
+                setNewPassword('');
+                setResetError(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              loading={resetPasswordMut.isPending}
+              disabled={newPassword.length < 8}
+              onClick={() => {
+                if (resetTarget && newPassword.length >= 8) {
+                  resetPasswordMut.mutate({ id: resetTarget.id, password: newPassword });
+                }
+              }}
+            >
+              Set new password
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          {resetError && (
+            <div
+              role="alert"
+              className="rounded-md px-3 py-2 text-[12.5px]"
+              style={{ background: 'var(--danger-soft)', color: 'var(--danger)' }}
+            >
+              {resetError}
+            </div>
+          )}
+          <Label htmlFor="reset-pw" required>New password</Label>
+          <Input
+            id="reset-pw"
+            type="text"
+            placeholder="At least 8 characters"
+            value={newPassword}
+            onChange={(e) => {
+              setNewPassword(e.target.value);
+              setResetError(null);
+            }}
+          />
+          <p className="text-[11.5px] text-[var(--text-3)]">
+            Share this new password securely with the user so they can sign in.
+          </p>
+        </div>
+      </Modal>
 
       {/* Purge requires typing the email: a deliberate friction step. */}
       <Modal

@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { loginSchema, type LoginInput } from '../../../shared/validation';
 import { ApiError, apiPost } from '../../lib/api';
 import { Button, FieldError, Input, Label } from '../../components/ui/primitives';
@@ -15,14 +15,49 @@ import { PasswordInput } from './PasswordInput';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const stateEmail = (location.state as { email?: string } | null)?.email;
   const { refresh } = useSession();
   const [formError, setFormError] = useState<string | null>(null);
+
+  const oauthError = searchParams.get('error');
+  const getErrorMessage = () => {
+    if (formError) return formError;
+    if (oauthError === 'google_not_configured') {
+      return 'Google sign-in is not yet configured for this deployment. Please sign in with your email & password, or contact your administrator.';
+    }
+    if (oauthError === 'oauth_state') {
+      return 'Google sign-in session expired. Please try again.';
+    }
+    if (oauthError === 'oauth_exchange' || oauthError === 'oauth_token' || oauthError === 'oauth_verify') {
+      return 'Google authentication could not be completed. Please try again or sign in with password.';
+    }
+    if (oauthError === 'oauth_unverified') {
+      return 'Your Google email is not verified.';
+    }
+    if (oauthError === 'account_disabled') {
+      return 'This account has been deactivated.';
+    }
+    if (oauthError === 'use_owner_login') {
+      return 'Owner accounts must sign in via the Owner sign-in link below.';
+    }
+    if (oauthError) {
+      return 'Sign-in failed. Please try again.';
+    }
+    return null;
+  };
+  const activeError = getErrorMessage();
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginInput>({ resolver: zodResolver(loginSchema), mode: 'onBlur' });
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    mode: 'onBlur',
+    defaultValues: { email: stateEmail ?? '' },
+  });
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
@@ -68,13 +103,13 @@ export function LoginPage() {
       }
     >
       <form onSubmit={onSubmit} noValidate className="space-y-4">
-        {formError && (
+        {activeError && (
           <div
             role="alert"
             className="rounded-md px-3.5 py-3 text-[13px] leading-snug"
             style={{ background: 'var(--danger-soft)', color: 'var(--danger)' }}
           >
-            {formError}
+            {activeError}
           </div>
         )}
 
@@ -94,7 +129,12 @@ export function LoginPage() {
         </div>
 
         <div>
-          <Label htmlFor="password" required>Password</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" required>Password</Label>
+            <Link to="/forgot-password" className="text-[12px] text-[var(--accent)] font-medium hover:underline">
+              Forgot password?
+            </Link>
+          </div>
           <PasswordInput
             id="password"
             autoComplete="current-password"

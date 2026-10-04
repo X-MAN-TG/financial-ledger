@@ -106,6 +106,22 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required').max(LIMITS.passwordMax),
 });
 
+export const apiResetPasswordSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+export const resetPasswordSchema = z
+  .object({
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, 'Confirm your password'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+
 export const ownerLoginSchema = loginSchema.extend({
   totpCode: z.string().regex(/^\d{6}$/).optional(),
 });
@@ -397,9 +413,14 @@ export const ownerCreateUserSchema = z.object({
   displayName: displayNameSchema,
 });
 
-export const ownerUpdateUserSchema = z.object({
-  status: z.enum(['ACTIVE', 'DISABLED']),
-});
+export const ownerUpdateUserSchema = z
+  .object({
+    status: z.enum(['ACTIVE', 'DISABLED']).optional(),
+    password: passwordSchema.optional(),
+  })
+  .refine((o) => o.status !== undefined || o.password !== undefined, {
+    message: 'Must provide status or password to update',
+  });
 
 const columnKeySchema = z
   .string()
@@ -450,6 +471,8 @@ export const auditMeQuerySchema = z.object({
 
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type ApiResetPasswordInput = z.infer<typeof apiResetPasswordSchema>;
 export type OwnerLoginInput = z.infer<typeof ownerLoginSchema>;
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
 export type SettingsUpdateInput = z.infer<typeof settingsUpdateSchema>;
@@ -462,6 +485,7 @@ export type SyncBatchInput = z.infer<typeof syncBatchSchema>;
 export type ColumnCreateInput = z.infer<typeof columnCreateSchema>;
 export type ColumnUpdateInput = z.infer<typeof columnUpdateSchema>;
 export type OwnerCreateUserInput = z.infer<typeof ownerCreateUserSchema>;
+export type OwnerUpdateUserInput = z.infer<typeof ownerUpdateUserSchema>;
 export type ImportPayload = z.infer<typeof importPayloadSchema>;
 export type BackupExportInput = z.infer<typeof backupExportSchema>;
 

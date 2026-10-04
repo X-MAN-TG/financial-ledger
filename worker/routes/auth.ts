@@ -4,6 +4,7 @@
  */
 import { CSRF_COOKIE, SESSION_COOKIE } from '../../shared/constants';
 import {
+  apiResetPasswordSchema,
   loginSchema,
   ownerBootstrapSchema,
   ownerLoginSchema,
@@ -12,7 +13,7 @@ import {
 import type { Env } from '../lib/config';
 import { getMaxUsers, useSecureCookies } from '../lib/config';
 import { writeAudit } from '../lib/audit';
-import { hashIp, verifyPassword, newId } from '../lib/crypto';
+import { hashIp, hashPassword, verifyPassword, newId } from '../lib/crypto';
 import { execute, queryFirst, type DbUserRow } from '../lib/db';
 import { ApiException, json, noContent, badRequest, unauthenticated, forbidden } from '../lib/http';
 import {
@@ -140,6 +141,52 @@ export async function handleLogin(req: Request, env: Env, url: URL): Promise<Res
   });
 
   return withCookies(json({ user }), session.cookies);
+}
+
+export async function handleResetPassword(req: Request, env: Env, url: URL): Promise<Response> {
+  const ip = clientIp(req);
+  await enforceRateLimit(env, 'reset:ip', ip, LOGIN_RULE);
+
+  const body = await parseBody(req, apiResetPasswordSchema);
+  await enforceRateLimit(env, 'reset:email', body.email, LOGIN_RULE);
+
+  const row = await findUserByEmail(env, body.email);
+  if (!row) {
+    throw new ApiException(400, 'INVALID_REQUEST', 'Could not reset password for this email address');
+  }
+
+  if (row.role === 'OWNER') {
+    throw new ApiException(403, 'FORBIDDEN', 'Owner account password cannot be reset via this flow');
+  }
+
+  if (row.status === 'DISABLED') {
+    throw new ApiException(403, 'ACCOUNT_DISABLED', 'This account has been deactivated');
+  }
+
+  const hash = await hashPassword(body.password);
+  const provider = row.google_sub ? 'BOTH' : 'PASSWORD';
+  const now = Date.now();
+
+  await execute(
+    env,
+    'UPDATE users SET password_hash = ?, auth_provider = ?, updated_at = ? WHERE id = ?',
+    [hash, provider, now, row.id],
+  );
+
+  // Revoke active sessions for security
+  await execute(env, 'DELETE FROM sessions WHERE user_id = ?', [row.id]);
+
+  await writeAudit(env, {
+    userId: row.id,
+    actorRole: 'USER',
+    action: 'PASSWORD_RESET_SUCCESS',
+    resourceType: 'user',
+    resourceId: row.id,
+    scope: 'USER',
+    result: 'SUCCESS',
+  });
+
+  return json({ ok: true, message: 'Password has been reset successfully. You can now sign in.' });
 }
 
 export async function handleOwnerLogin(req: Request, env: Env, url: URL): Promise<Response> {
@@ -278,7 +325,9 @@ function redirectUri(url: URL): string {
 
 export function handleGoogleStart(req: Request, env: Env, url: URL): Response {
   const clientId = env.GOOGLE_OAUTH_CLIENT_ID;
-  if (!clientId) throw badRequest('Google sign-in is not configured for this deployment');
+  if (!clientId) {
+    return Response.redirect(`${url.origin}/login?error=google_not_configured`, 302);
+  }
 
   const state = newId();
   const target = new URL(GOOGLE_AUTH_URL);

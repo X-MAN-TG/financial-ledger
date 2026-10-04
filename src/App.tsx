@@ -18,6 +18,7 @@ import { LedgerPage } from './features/ledger/LedgerPage';
 import { LoginPage } from './features/auth/LoginPage';
 import { SignupPage } from './features/auth/SignupPage';
 import { OwnerLoginPage } from './features/auth/OwnerLoginPage';
+import { ForgotPasswordPage } from './features/auth/ForgotPasswordPage';
 
 // Route-level code splitting keeps the first paint small (19 s2).
 const TimelinePage = lazy(() =>
@@ -142,6 +143,14 @@ export function App() {
                 element={
                   <PublicOnly>
                     <SignupPage />
+                  </PublicOnly>
+                }
+              />
+              <Route
+                path="/forgot-password"
+                element={
+                  <PublicOnly>
+                    <ForgotPasswordPage />
                   </PublicOnly>
                 }
               />
