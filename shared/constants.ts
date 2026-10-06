@@ -173,10 +173,10 @@ export const LIMITS = {
 export const DEFAULT_PAGE_SIZE = 50;
 export const MAX_PAGE_SIZE = 200;
 
-/** Session lifetime: 30 days sliding, refreshed on activity (04 s2.2). */
-export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/** Session lifetime: 90 days sliding, refreshed on activity (04 s2.2). */
+export const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 /** Only rewrite expires_at when more than this much of the TTL elapsed. */
-export const SESSION_REFRESH_THRESHOLD_MS = 24 * 60 * 60 * 1000;
+export const SESSION_REFRESH_THRESHOLD_MS = 12 * 60 * 60 * 1000;
 
 export const SESSION_COOKIE = 'ledger_session';
 export const CSRF_COOKIE = 'ledger_csrf';

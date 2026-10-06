@@ -116,11 +116,16 @@ async function routeApi(req: Request, env: Env, url: URL): Promise<Response> {
   if (pathname === '/api/auth/reset-password' && method === 'POST')
     return handleResetPassword(req, env, url);
   if (pathname === '/api/auth/logout' && method === 'POST') return handleLogout(req, env, url);
-  if (pathname === '/api/auth/session' && method === 'GET') return handleSessionInfo(req, env);
+  if (pathname === '/api/auth/session' && method === 'GET') return handleSessionInfo(req, env, url);
   if (pathname === '/api/auth/google/start' && method === 'GET') {
     return handleGoogleStart(req, env, url);
   }
-  if (pathname === '/api/auth/google/callback' && method === 'GET') {
+  if (
+    (pathname === '/api/auth/google/callback' ||
+      pathname === '/api/auth/callback/google' ||
+      pathname === '/auth/google/callback') &&
+    method === 'GET'
+  ) {
     return handleGoogleCallback(req, env, url);
   }
   if (pathname === '/api/owner/login' && method === 'POST') return handleOwnerLogin(req, env, url);
@@ -283,11 +288,28 @@ export default {
 
     // Static SPA assets with index.html fallback for client-side routes.
     if (env.ASSETS) {
+      const isHtmlOrSw =
+        url.pathname === '/' ||
+        url.pathname === '/index.html' ||
+        url.pathname === '/sw.js' ||
+        url.pathname === '/registerSW.js';
+
       const res = await env.ASSETS.fetch(req);
       if (res.status === 404 && req.method === 'GET') {
         const indexReq = new Request(new URL('/index.html', url.origin), req);
         const index = await env.ASSETS.fetch(indexReq);
-        return applySecurityHeaders(index);
+        const headers = new Headers(index.headers);
+        headers.set('cache-control', 'no-cache, no-store, must-revalidate');
+        headers.set('pragma', 'no-cache');
+        headers.set('expires', '0');
+        return applySecurityHeaders(new Response(index.body, { ...index, headers }));
+      }
+      if (isHtmlOrSw) {
+        const headers = new Headers(res.headers);
+        headers.set('cache-control', 'no-cache, no-store, must-revalidate');
+        headers.set('pragma', 'no-cache');
+        headers.set('expires', '0');
+        return applySecurityHeaders(new Response(res.body, { ...res, headers }));
       }
       return applySecurityHeaders(res);
     }

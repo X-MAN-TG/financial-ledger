@@ -43,7 +43,13 @@ export function parseCookies(req: Request): Record<string, string> {
     if (idx === -1) continue;
     const k = part.slice(0, idx).trim();
     const v = part.slice(idx + 1).trim();
-    if (k) out[k] = decodeURIComponent(v);
+    if (k) {
+      try {
+        out[k] = decodeURIComponent(v);
+      } catch {
+        out[k] = v;
+      }
+    }
   }
   return out;
 }
@@ -202,19 +208,21 @@ export function buildSessionCookies(
 ): string[] {
   const secure = useSecureCookies(env, url) ? '; Secure' : '';
   const maxAge = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+  const expires = new Date(expiresAt).toUTCString();
   return [
     // HttpOnly: unreachable from injected script (20 section 2.2).
-    `${SESSION_COOKIE}=${sessionId}; Path=/; HttpOnly${secure}; SameSite=Lax; Max-Age=${maxAge}`,
+    `${SESSION_COOKIE}=${sessionId}; Path=/; HttpOnly${secure}; SameSite=Lax; Max-Age=${maxAge}; Expires=${expires}`,
     // Readable by our own JS so it can be echoed in the CSRF header.
-    `${CSRF_COOKIE}=${csrfToken}; Path=/${secure}; SameSite=Lax; Max-Age=${maxAge}`,
+    `${CSRF_COOKIE}=${csrfToken}; Path=/; SameSite=Lax; Max-Age=${maxAge}; Expires=${expires}${secure}`,
   ];
 }
 
 export function clearSessionCookies(env: Env, url: URL): string[] {
   const secure = useSecureCookies(env, url) ? '; Secure' : '';
+  const expires = new Date(0).toUTCString();
   return [
-    `${SESSION_COOKIE}=; Path=/; HttpOnly${secure}; SameSite=Lax; Max-Age=0`,
-    `${CSRF_COOKIE}=; Path=/${secure}; SameSite=Lax; Max-Age=0`,
+    `${SESSION_COOKIE}=; Path=/; HttpOnly${secure}; SameSite=Lax; Max-Age=0; Expires=${expires}`,
+    `${CSRF_COOKIE}=; Path=/; SameSite=Lax; Max-Age=0; Expires=${expires}${secure}`,
   ];
 }
 

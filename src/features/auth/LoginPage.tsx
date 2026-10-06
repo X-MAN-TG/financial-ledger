@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { loginSchema, type LoginInput } from '../../../shared/validation';
+import type { SessionUser } from '../../../shared/types';
 import { ApiError, apiPost } from '../../lib/api';
 import { Button, FieldError, Input, Label } from '../../components/ui/primitives';
 import { useSession } from '../../hooks/use-session';
@@ -18,7 +19,7 @@ export function LoginPage() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const stateEmail = (location.state as { email?: string } | null)?.email;
-  const { refresh } = useSession();
+  const { refresh, setUser } = useSession();
   const [formError, setFormError] = useState<string | null>(null);
 
   const oauthError = searchParams.get('error');
@@ -62,7 +63,10 @@ export function LoginPage() {
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     try {
-      await apiPost('/api/auth/login', values);
+      const res = await apiPost<{ user: SessionUser }>('/api/auth/login', values);
+      if (res?.user) {
+        setUser(res.user);
+      }
       await refresh();
       navigate('/ledger', { replace: true });
     } catch (e) {
@@ -88,6 +92,12 @@ export function LoginPage() {
       subtitle="Access your private transaction ledger."
       footer={
         <div className="space-y-2">
+          <p>
+            Forgot your password?{' '}
+            <Link to="/forgot-password" className="text-[var(--accent)] font-medium hover:underline">
+              Reset password
+            </Link>
+          </p>
           <p>
             Need an account?{' '}
             <Link to="/signup" className="text-[var(--accent)] font-medium hover:underline">

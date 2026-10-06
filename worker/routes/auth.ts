@@ -2,7 +2,7 @@
  * Auth routes (05 section 2, 04 sections 2-3).
  * Public: signup, login, google start/callback, owner login, owner bootstrap.
  */
-import { CSRF_COOKIE, SESSION_COOKIE } from '../../shared/constants';
+import { CSRF_COOKIE, SESSION_COOKIE, SESSION_TTL_MS } from '../../shared/constants';
 import {
   apiResetPasswordSchema,
   loginSchema,
@@ -24,6 +24,7 @@ import {
   enforceRateLimit,
 } from '../lib/ratelimit';
 import {
+  buildSessionCookies,
   clientIp,
   clearSessionCookies,
   createSession,
@@ -250,7 +251,7 @@ export async function handleLogout(req: Request, env: Env, url: URL): Promise<Re
   return withCookies(noContent(), clearSessionCookies(env, url));
 }
 
-export async function handleSessionInfo(req: Request, env: Env): Promise<Response> {
+export async function handleSessionInfo(req: Request, env: Env, url: URL): Promise<Response> {
   const session = await resolveSession(req, env);
   if (!session) throw unauthenticated();
   if (session.status === 'DISABLED') {
@@ -260,11 +261,24 @@ export async function handleSessionInfo(req: Request, env: Env): Promise<Respons
     session.userId,
   ]);
   if (!row) throw unauthenticated();
-  return json({
-    user: toSessionUser(row, session.displayName),
-    csrfToken: session.csrfToken,
-    maxUsers: getMaxUsers(env),
-  });
+
+  // Sliding session persistence: extend session in D1 and re-issue fresh persistent cookies
+  const now = Date.now();
+  const newExpiry = now + SESSION_TTL_MS;
+  await execute(env, 'UPDATE sessions SET expires_at = ? WHERE id = ?', [
+    newExpiry,
+    session.sessionId,
+  ]).catch(() => undefined);
+  const cookies = buildSessionCookies(env, url, session.sessionId, session.csrfToken, newExpiry);
+
+  return withCookies(
+    json({
+      user: toSessionUser(row, session.displayName),
+      csrfToken: session.csrfToken,
+      maxUsers: getMaxUsers(env),
+    }),
+    cookies,
+  );
 }
 
 /**
@@ -319,7 +333,11 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs';
 const OAUTH_STATE_COOKIE = 'ledger_oauth_state';
 
-function redirectUri(url: URL): string {
+function redirectUri(url: URL, env?: Env): string {
+  if (env?.APP_ORIGIN && env.APP_ORIGIN.trim()) {
+    const origin = env.APP_ORIGIN.trim().split(',')[0].trim().replace(/\/+$/, '');
+    return `${origin}/api/auth/google/callback`;
+  }
   return `${url.origin}/api/auth/google/callback`;
 }
 
@@ -332,7 +350,7 @@ export function handleGoogleStart(req: Request, env: Env, url: URL): Response {
   const state = newId();
   const target = new URL(GOOGLE_AUTH_URL);
   target.searchParams.set('client_id', clientId);
-  target.searchParams.set('redirect_uri', redirectUri(url));
+  target.searchParams.set('redirect_uri', redirectUri(url, env));
   target.searchParams.set('response_type', 'code');
   target.searchParams.set('scope', 'openid email profile');
   target.searchParams.set('state', state);
@@ -447,7 +465,7 @@ export async function handleGoogleCallback(req: Request, env: Env, url: URL): Pr
       code,
       client_id: clientId,
       client_secret: clientSecret,
-      redirect_uri: redirectUri(url),
+      redirect_uri: redirectUri(url, env),
       grant_type: 'authorization_code',
     }),
   });

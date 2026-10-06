@@ -16,6 +16,7 @@ export interface Env {
   // Vars
   MAX_USERS?: string;
   APP_ENV?: string;
+  APP_ORIGIN?: string;
   BACKUP_RETENTION_DAYS?: string;
   /** Test-only; ignored when APP_ENV=production. See getRateLimitScale. */
   RELAX_RATE_LIMITS?: string;

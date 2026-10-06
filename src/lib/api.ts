@@ -53,7 +53,7 @@ export async function api<T = unknown>(
       ...options,
       method,
       headers,
-      credentials: 'same-origin',
+      credentials: 'include',
       body: options.json !== undefined ? JSON.stringify(options.json) : options.body,
     });
   } catch {
