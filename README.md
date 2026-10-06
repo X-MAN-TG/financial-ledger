@@ -10,7 +10,7 @@
 [![Offline First](https://img.shields.io/badge/Offline-First-6c5ce7?style=flat-square&logo=pwa&logoColor=white)](#-offline-first-architecture)
 [![License](https://img.shields.io/badge/License-Private-lightgrey?style=flat-square)](#-license)
 
-**[🔴 Live Demo →](https://daily-ledger.100coldice.workers.dev)**
+**[🔴 Live Demo →](https://ledger.quantalabs.dpdns.org)**
 
 </div>
 
