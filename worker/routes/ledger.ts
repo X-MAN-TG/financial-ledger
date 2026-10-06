@@ -186,12 +186,14 @@ export async function updateLedgerDay(
     body.attachments !== undefined ? body.attachments : (day.attachments ?? []);
   const nextUsdtRate =
     body.usdtRate !== undefined ? body.usdtRate : (day.usdtRate ?? 0);
+  const nextUsdtPurchased =
+    body.usdtPurchased !== undefined ? body.usdtPurchased : (day.usdtPurchased ?? 0);
 
   const { execute } = await import('../lib/db');
   await execute(
     env,
-    'UPDATE ledger_days SET status = ?, note = ?, attachments = ?, usdt_rate = ?, updated_at = ? WHERE id = ? AND user_id = ?',
-    [nextStatus, nextNote, JSON.stringify(nextAttachments), nextUsdtRate, now, day.id, session.userId],
+    'UPDATE ledger_days SET status = ?, note = ?, attachments = ?, usdt_rate = ?, usdt_purchased = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+    [nextStatus, nextNote, JSON.stringify(nextAttachments), nextUsdtRate, nextUsdtPurchased, now, day.id, session.userId],
   );
 
   const row = await queryFirst<Record<string, unknown>>(

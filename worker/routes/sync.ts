@@ -222,8 +222,10 @@ async function applyOne(
       JSON.stringify(parsed.data.attachments) !== JSON.stringify(day.attachments ?? []);
     const hasUsdtRateChange =
       parsed.data.usdtRate !== undefined && parsed.data.usdtRate !== day.usdtRate;
+    const hasUsdtPurchasedChange =
+      parsed.data.usdtPurchased !== undefined && parsed.data.usdtPurchased !== day.usdtPurchased;
 
-    if (hasStatusChange || hasNoteChange || hasAttachmentsChange || hasUsdtRateChange) {
+    if (hasStatusChange || hasNoteChange || hasAttachmentsChange || hasUsdtRateChange || hasUsdtPurchasedChange) {
       const now = Date.now();
       const nextStatus = parsed.data.status ?? day.status;
       const nextNote = parsed.data.note !== undefined ? parsed.data.note : (day.note ?? null);
@@ -231,12 +233,14 @@ async function applyOne(
         parsed.data.attachments !== undefined ? parsed.data.attachments : (day.attachments ?? []);
       const nextUsdtRate =
         parsed.data.usdtRate !== undefined ? parsed.data.usdtRate : (day.usdtRate ?? 0);
+      const nextUsdtPurchased =
+        parsed.data.usdtPurchased !== undefined ? parsed.data.usdtPurchased : (day.usdtPurchased ?? 0);
 
       const { execute } = await import('../lib/db');
       await execute(
         env,
-        'UPDATE ledger_days SET status = ?, note = ?, attachments = ?, usdt_rate = ?, updated_at = ? WHERE id = ? AND user_id = ?',
-        [nextStatus, nextNote, JSON.stringify(nextAttachments), nextUsdtRate, now, day.id, session.userId],
+        'UPDATE ledger_days SET status = ?, note = ?, attachments = ?, usdt_rate = ?, usdt_purchased = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+        [nextStatus, nextNote, JSON.stringify(nextAttachments), nextUsdtRate, nextUsdtPurchased, now, day.id, session.userId],
       );
       if (hasStatusChange) {
         await writeAudit(env, {

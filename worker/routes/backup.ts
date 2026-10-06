@@ -396,13 +396,14 @@ export async function importBackup(
     statements.push(
       stmt(
         env,
-        `INSERT INTO ledger_days (id, user_id, date, status, note, attachments, usdt_rate, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO ledger_days (id, user_id, date, status, note, attachments, usdt_rate, usdt_purchased, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(user_id, date) DO UPDATE SET
            note = COALESCE(excluded.note, ledger_days.note),
            attachments = COALESCE(excluded.attachments, ledger_days.attachments),
-           usdt_rate = COALESCE(excluded.usdt_rate, ledger_days.usdt_rate)`,
-        [d.id, session.userId, d.date, d.status, d.note ?? null, JSON.stringify(d.attachments ?? []), d.usdtRate ?? 0, d.createdAt, d.updatedAt],
+           usdt_rate = COALESCE(excluded.usdt_rate, ledger_days.usdt_rate),
+           usdt_purchased = COALESCE(excluded.usdt_purchased, ledger_days.usdt_purchased)`,
+        [d.id, session.userId, d.date, d.status, d.note ?? null, JSON.stringify(d.attachments ?? []), d.usdtRate ?? 0, d.usdtPurchased ?? 0, d.createdAt, d.updatedAt],
       ),
     );
     daysInserted += 1;

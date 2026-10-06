@@ -18,6 +18,8 @@ export interface NoteSheetProps {
   initialAttachments?: NoteAttachment[];
   onClose: () => void;
   onSave: (note: string | null, attachments: NoteAttachment[]) => void;
+  /** Auto-save callback triggered as user edits or dismisses so changes are never lost */
+  onAutoSave?: (note: string | null, attachments: NoteAttachment[]) => void;
 }
 
 export function NoteSheet({
@@ -30,6 +32,7 @@ export function NoteSheet({
   initialAttachments,
   onClose,
   onSave,
+  onAutoSave,
 }: NoteSheetProps) {
   const isOpen = row !== undefined ? Boolean(row) : Boolean(explicitOpen);
 
@@ -39,20 +42,60 @@ export function NoteSheet({
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
   const [processing, setProcessing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceTimerRef = useRef<number | null>(null);
+  const lastSavedRef = useRef<{ note: string; attachments: NoteAttachment[] }>({ note: '', attachments: [] });
+  const isDirtyRef = useRef(false);
 
   useEffect(() => {
-    if (row) {
-      setDraft(row.note ?? '');
-      setAttachments(row.attachments ?? []);
-    } else {
-      setDraft(initialNote ?? '');
-      setAttachments(initialAttachments ?? []);
-    }
+    const initN = row ? (row.note ?? '') : (initialNote ?? '');
+    const initA = row ? (row.attachments ?? []) : (initialAttachments ?? []);
+    setDraft(initN);
+    setAttachments(initA);
+    lastSavedRef.current = { note: initN, attachments: initA };
+    isDirtyRef.current = false;
+    setSyncStatus('idle');
     setUploadError(null);
     setLightboxIndex(null);
     setPendingDelete(null);
   }, [row, initialNote, initialAttachments, isOpen]);
+
+  // Clean up debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
+
+  const flushAutoSave = (textToSave = draft, attsToSave = attachments) => {
+    const trimmed = textToSave.trim() === '' ? null : textToSave.trim();
+    const lastNote = lastSavedRef.current.note.trim() === '' ? null : lastSavedRef.current.note.trim();
+    const noteChanged = trimmed !== lastNote;
+    const attsChanged = JSON.stringify(attsToSave) !== JSON.stringify(lastSavedRef.current.attachments);
+
+    if (noteChanged || attsChanged) {
+      setSyncStatus('saving');
+      onAutoSave?.(trimmed, attsToSave);
+      lastSavedRef.current = { note: textToSave, attachments: attsToSave };
+      isDirtyRef.current = false;
+      setTimeout(() => {
+        setSyncStatus('saved');
+      }, 350);
+    }
+  };
+
+  const handleDraftChange = (newText: string) => {
+    setDraft(newText);
+    isDirtyRef.current = true;
+    setSyncStatus('saving');
+
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = window.setTimeout(() => {
+      flushAutoSave(newText, attachments);
+    }, 750);
+  };
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -81,7 +124,11 @@ export function NoteSheet({
         processed.push(item);
       }
 
-      setAttachments((prev) => [...prev, ...processed].slice(0, MAX_ATTACHMENTS));
+      const updated = [...attachments, ...processed].slice(0, MAX_ATTACHMENTS);
+      setAttachments(updated);
+      isDirtyRef.current = true;
+      // Auto-save immediately when new images are attached
+      flushAutoSave(draft, updated);
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Could not process image');
     } finally {
@@ -91,13 +138,27 @@ export function NoteSheet({
   };
 
   const handleRemoveAttachment = (id: string) => {
-    setAttachments((prev) => prev.filter((a) => a.id !== id));
+    const updated = attachments.filter((a) => a.id !== id);
+    setAttachments(updated);
     if (pendingDelete?.id === id) {
       setPendingDelete(null);
     }
+    isDirtyRef.current = true;
+    // Auto-save immediately when an image is removed
+    flushAutoSave(draft, updated);
   };
 
-  const save = () => {
+  // Safe close handler that guarantees no unsaved note text or images are lost
+  const handleClose = () => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    if (isDirtyRef.current) {
+      flushAutoSave(draft, attachments);
+    }
+    onClose();
+  };
+
+  const handleExplicitSave = () => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     onSave(draft.trim() === '' ? null : draft.trim(), attachments);
   };
 
@@ -112,7 +173,7 @@ export function NoteSheet({
     <>
       <Modal
         open={isOpen}
-        onClose={onClose}
+        onClose={handleClose}
         title={modalTitle}
         description={modalDescription}
         size="md"
@@ -124,34 +185,53 @@ export function NoteSheet({
                 onClick={() => {
                   setDraft('');
                   setAttachments([]);
+                  isDirtyRef.current = true;
+                  flushAutoSave('', []);
                 }}
                 className="mr-auto text-[var(--text-3)] hover:text-[var(--danger)]"
               >
                 Clear all
               </Button>
             )}
-            <Button variant="ghost" onClick={onClose} data-close>
-              Cancel
+            <Button variant="ghost" onClick={handleClose} data-close>
+              Close
             </Button>
-            <Button variant="primary" onClick={save} disabled={processing}>
+            <Button variant="primary" onClick={handleExplicitSave} disabled={processing}>
               Save note
             </Button>
           </>
         }
       >
         <div className="space-y-4">
+          <div className="flex items-center justify-between text-xs text-[var(--text-3)]">
+            <span>Details &amp; Context</span>
+            {syncStatus === 'saving' && (
+              <span className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--accent)] animate-pulse">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+                Auto-saving...
+              </span>
+            )}
+            {syncStatus === 'saved' && (
+              <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Auto-saved
+              </span>
+            )}
+          </div>
           <div>
             <Textarea
               rows={5}
               value={draft}
               maxLength={LIMITS.noteMax}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={(e) => handleDraftChange(e.target.value)}
               placeholder={placeholder ?? 'Add details, transaction context, or closing remarks…'}
               aria-label="Note text"
               className="resize-none"
             />
             <div className="mt-1.5 flex items-center justify-between text-[11.5px] text-[var(--text-3)]">
-              <span>Supports up to {MAX_ATTACHMENTS} screenshots/media</span>
+              <span>Supports up to {MAX_ATTACHMENTS} screenshots • Auto-syncs as you type</span>
               <span className={remaining < 50 ? 'text-[var(--warning)] font-medium' : ''}>
                 {remaining} character{remaining === 1 ? '' : 's'} left
               </span>
@@ -163,7 +243,7 @@ export function NoteSheet({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-2)]">
-                  Screenshots & Media
+                  Screenshots &amp; Media
                 </span>
                 <span className="rounded-full bg-[var(--surface-3)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-2)]">
                   {attachments.length}/{MAX_ATTACHMENTS}

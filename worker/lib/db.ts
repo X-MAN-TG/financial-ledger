@@ -87,6 +87,8 @@ export function mapLedgerDay(r: Record<string, unknown>): LedgerDay {
     note: strOrNull(r.note),
     attachments: r.attachments ? JSON.parse(String(r.attachments)) : [],
     usdtRate: r.usdt_rate !== null && r.usdt_rate !== undefined ? Number(r.usdt_rate) : 0,
+    usdtPurchased:
+      r.usdt_purchased !== null && r.usdt_purchased !== undefined ? Number(r.usdt_purchased) : 0,
     createdAt: Number(r.created_at),
     updatedAt: Number(r.updated_at),
   };

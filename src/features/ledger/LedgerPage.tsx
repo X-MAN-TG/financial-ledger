@@ -178,11 +178,23 @@ export function LedgerPage() {
     [db, day, toast],
   );
 
+  const handleUpdateUsdtPurchased = useCallback(
+    (purchased: number) => {
+      if (!db || !day) return;
+      void updateDayDetails(db, day, { usdtPurchased: purchased }).catch(() =>
+        toast({ title: 'Could not save purchased USDT', tone: 'danger' }),
+      );
+    },
+    [db, day, toast],
+  );
+
   const handleSaveDayNote = useCallback(
-    (note: string | null, attachments: NoteAttachment[]) => {
+    (note: string | null, attachments: NoteAttachment[], showToast = true) => {
       if (!db || !day) return;
       void updateDayDetails(db, day, { note, attachments })
-        .then(() => toast({ title: 'Day note updated', tone: 'success' }))
+        .then(() => {
+          if (showToast) toast({ title: 'Day note updated', tone: 'success' });
+        })
         .catch(() => toast({ title: 'Could not save day note', tone: 'danger' }));
     },
     [db, day, toast],
@@ -388,11 +400,13 @@ export function LedgerPage() {
             <TotalsBar totals={totals} pendingSync={pendingSync} />
           </div>
 
-          {/* Day Footer Controls: USDT Rate box and Day Closing Note & Media box (kept below totals) */}
+          {/* Day Footer Controls: USDT Rate & Balance box and Day Closing Note & Media box */}
           <DayFooterControls
             day={day ?? null}
             readOnly={isDayOff}
+            issuedUsdt={totals.totalUsdt}
             onUpdateUsdtRate={handleUpdateUsdtRate}
+            onUpdateUsdtPurchased={handleUpdateUsdtPurchased}
             onOpenDayNote={() => setDayNoteOpen(true)}
           />
         </>
@@ -403,7 +417,9 @@ export function LedgerPage() {
         <DayFooterControls
           day={day}
           readOnly={isDayOff}
+          issuedUsdt={totals.totalUsdt}
           onUpdateUsdtRate={handleUpdateUsdtRate}
+          onUpdateUsdtPurchased={handleUpdateUsdtPurchased}
           onOpenDayNote={() => setDayNoteOpen(true)}
         />
       )}
@@ -412,6 +428,9 @@ export function LedgerPage() {
       <NoteSheet
         row={noteRow}
         onClose={() => setNoteRow(null)}
+        onAutoSave={(note, attachments) => {
+          if (noteRow) handleEdit(noteRow.id, { note, attachments });
+        }}
         onSave={(note, attachments) => {
           if (noteRow) handleEdit(noteRow.id, { note, attachments });
           setNoteRow(null);
@@ -427,8 +446,11 @@ export function LedgerPage() {
         initialAttachments={day?.attachments ?? []}
         placeholder="Add day closing summary, reconciliation details, or important reminders for today…"
         onClose={() => setDayNoteOpen(false)}
+        onAutoSave={(note, attachments) => {
+          handleSaveDayNote(note, attachments, false);
+        }}
         onSave={(note, attachments) => {
-          handleSaveDayNote(note, attachments);
+          handleSaveDayNote(note, attachments, true);
           setDayNoteOpen(false);
         }}
       />

@@ -123,6 +123,10 @@ export async function openLedgerDay(
           isLocalPending && existingLocal && existingLocal.usdtRate !== undefined
             ? existingLocal.usdtRate
             : (res.ledgerDay.usdtRate ?? 0),
+        usdtPurchased:
+          isLocalPending && existingLocal && existingLocal.usdtPurchased !== undefined
+            ? existingLocal.usdtPurchased
+            : (res.ledgerDay.usdtPurchased ?? 0),
         syncStatus: isLocalPending && existingLocal ? existingLocal.syncStatus : 'SYNCED',
         serverConfirmedAt: Date.now(),
         lastSyncError: null,
@@ -190,6 +194,7 @@ export async function openLedgerDay(
       note: null,
       attachments: [],
       usdtRate: 0,
+      usdtPurchased: 0,
       createdAt: now,
       updatedAt: now,
       syncStatus: 'LOCAL_ONLY',
@@ -367,13 +372,20 @@ export async function setDayStatus(
 export async function updateDayDetails(
   db: LedgerDexie,
   day: LocalLedgerDay,
-  patch: { note?: string | null; attachments?: NoteAttachment[]; usdtRate?: number | null },
+  patch: {
+    note?: string | null;
+    attachments?: NoteAttachment[];
+    usdtRate?: number | null;
+    usdtPurchased?: number | null;
+  },
 ): Promise<LocalLedgerDay> {
   const next: LocalLedgerDay = {
     ...day,
     note: patch.note !== undefined ? patch.note : (day.note ?? null),
     attachments: patch.attachments !== undefined ? patch.attachments : (day.attachments ?? []),
     usdtRate: patch.usdtRate !== undefined ? patch.usdtRate : (day.usdtRate ?? 0),
+    usdtPurchased:
+      patch.usdtPurchased !== undefined ? patch.usdtPurchased : (day.usdtPurchased ?? 0),
     updatedAt: Date.now(),
     syncStatus: 'PENDING_SYNC',
   };

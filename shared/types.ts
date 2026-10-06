@@ -91,6 +91,7 @@ export interface LedgerDay {
   note?: string | null;
   attachments?: NoteAttachment[];
   usdtRate?: number | null;
+  usdtPurchased?: number | null;
   createdAt: number;
   updatedAt: number;
 }

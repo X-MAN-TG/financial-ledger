@@ -7,43 +7,67 @@ import { cn } from '../../lib/cn';
 interface DayFooterControlsProps {
   day: LocalLedgerDay | null;
   readOnly?: boolean;
+  issuedUsdt?: number;
   onUpdateUsdtRate: (rate: number) => void;
+  onUpdateUsdtPurchased: (purchased: number) => void;
   onOpenDayNote: () => void;
 }
 
 export function DayFooterControls({
   day,
   readOnly = false,
+  issuedUsdt = 0,
   onUpdateUsdtRate,
+  onUpdateUsdtPurchased,
   onOpenDayNote,
 }: DayFooterControlsProps) {
   const currentRate = day?.usdtRate ?? 0;
+  const currentPurchased = day?.usdtPurchased ?? 0;
+
   const [rateInput, setRateInput] = useState<string>(
     currentRate === 0 ? '0' : String(currentRate),
+  );
+  const [purchasedInput, setPurchasedInput] = useState<string>(
+    currentPurchased === 0 ? '0' : String(currentPurchased),
   );
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    const val = day?.usdtRate ?? 0;
-    setRateInput(val === 0 ? '0' : String(val));
+    const r = day?.usdtRate ?? 0;
+    setRateInput(r === 0 ? '0' : String(r));
   }, [day?.usdtRate]);
 
-  const handleRateChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setRateInput(val);
-  };
+  useEffect(() => {
+    const p = day?.usdtPurchased ?? 0;
+    setPurchasedInput(p === 0 ? '0' : String(p));
+  }, [day?.usdtPurchased]);
 
-  const handleBlurOrCommit = () => {
+  const handleRateBlurOrCommit = () => {
     const trimmed = rateInput.trim();
     const parsed = trimmed === '' ? 0 : Number(trimmed);
     const safeRate = isNaN(parsed) || parsed < 0 ? 0 : parsed;
     setRateInput(safeRate === 0 ? '0' : String(safeRate));
     if (safeRate !== (day?.usdtRate ?? 0)) {
       onUpdateUsdtRate(safeRate);
-      setSavedSuccess(true);
-      setTimeout(() => setSavedSuccess(false), 2000);
+      triggerSaved();
     }
+  };
+
+  const handlePurchasedBlurOrCommit = () => {
+    const trimmed = purchasedInput.trim();
+    const parsed = trimmed === '' ? 0 : Number(trimmed);
+    const safePurchased = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+    setPurchasedInput(safePurchased === 0 ? '0' : String(safePurchased));
+    if (safePurchased !== (day?.usdtPurchased ?? 0)) {
+      onUpdateUsdtPurchased(safePurchased);
+      triggerSaved();
+    }
+  };
+
+  const triggerSaved = () => {
+    setSavedSuccess(true);
+    setTimeout(() => setSavedSuccess(false), 2000);
   };
 
   const hasDayNote = Boolean(day?.note && day.note.trim());
@@ -51,23 +75,26 @@ export function DayFooterControls({
   const hasAttachments = attachments.length > 0;
   const rateDisplay = rateInput.trim() !== '' ? rateInput.trim() : '0';
 
+  const numPurchased = Number(purchasedInput) || 0;
+  const issued = Number(issuedUsdt) || 0;
+  const remaining = Math.round((numPurchased - issued) * 100) / 100;
+  const isSurplus = remaining > 0;
+  const isDeficit = remaining < 0;
+
   return (
     <>
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-12 gap-3 no-print">
-        {/* USDT Rate Box */}
-        <div className="md:col-span-4 lg:col-span-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-1)] p-3.5 shadow-sm flex flex-col justify-between">
+      <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-3 no-print">
+        {/* USDT Trading, Rate & Reconciliation Box */}
+        <div className="lg:col-span-5 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-1)] p-3.5 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
                   $
                 </span>
-                <label
-                  htmlFor="day-usdt-rate"
-                  className="text-xs font-semibold uppercase tracking-wider text-[var(--text-1)]"
-                >
-                  USDT Rate
-                </label>
+                <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-1)]">
+                  USDT Rate &amp; Day Trading
+                </span>
               </div>
               {savedSuccess && (
                 <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 animate-fade-in">
@@ -79,50 +106,122 @@ export function DayFooterControls({
               )}
             </div>
             <p className="mt-1 text-[11.5px] text-[var(--text-3)] leading-tight">
-              Rate received for today&apos;s USDT trades.
+              Track purchase, unit rate, customer issuance, and net surplus/deficit.
             </p>
           </div>
 
-          <div className="mt-3">
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[var(--text-3)]">
-                ₹
-              </span>
-              <Input
-                id="day-usdt-rate"
-                type="number"
-                step="any"
-                min="0"
-                disabled={readOnly}
-                value={rateInput}
-                onChange={handleRateChange}
-                onBlur={handleBlurOrCommit}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.currentTarget.blur();
-                  }
-                }}
-                placeholder="0"
-                aria-label="Today's USDT rate"
-                className={cn(
-                  'pl-7 pr-3 h-10 text-[15px] font-semibold tracking-tight num',
-                  'bg-[var(--surface-2)] border-[var(--border)] focus:bg-[var(--surface-1)]',
-                )}
-              />
+          <div className="mt-3 space-y-2.5">
+            {/* Inputs Grid: Rate and Purchased */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label
+                  htmlFor="day-usdt-rate"
+                  className="block text-[11px] font-medium text-[var(--text-3)] mb-1"
+                >
+                  USDT Rate (₹)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[var(--text-3)]">
+                    ₹
+                  </span>
+                  <Input
+                    id="day-usdt-rate"
+                    type="number"
+                    step="any"
+                    min="0"
+                    disabled={readOnly}
+                    value={rateInput}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setRateInput(e.target.value)}
+                    onBlur={handleRateBlurOrCommit}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') e.currentTarget.blur();
+                    }}
+                    placeholder="0"
+                    aria-label="Today's USDT rate"
+                    className={cn(
+                      'pl-6 pr-2.5 h-9 text-[14px] font-semibold tracking-tight num',
+                      'bg-[var(--surface-2)] border-[var(--border)] focus:bg-[var(--surface-1)]',
+                    )}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="day-usdt-purchased"
+                  className="block text-[11px] font-medium text-[var(--text-3)] mb-1"
+                >
+                  Purchased (USDT)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-[var(--text-3)]">
+                    $
+                  </span>
+                  <Input
+                    id="day-usdt-purchased"
+                    type="number"
+                    step="any"
+                    min="0"
+                    disabled={readOnly}
+                    value={purchasedInput}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setPurchasedInput(e.target.value)}
+                    onBlur={handlePurchasedBlurOrCommit}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') e.currentTarget.blur();
+                    }}
+                    placeholder="0"
+                    aria-label="USDT purchased today"
+                    className={cn(
+                      'pl-6 pr-2.5 h-9 text-[14px] font-semibold tracking-tight num',
+                      'bg-[var(--surface-2)] border-[var(--border)] focus:bg-[var(--surface-1)]',
+                    )}
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Exactly formatted as user requested: 1$ = 101, 102 etc. */}
-            <div className="mt-2 flex items-center justify-between text-[11.5px] border-t border-[var(--border)] pt-1.5">
-              <span className="text-[var(--text-3)]">Unit rate:</span>
-              <span className="font-semibold text-[var(--text-1)] num font-mono">
-                1$ = ₹{rateDisplay}
-              </span>
+            {/* Reconciliation summary card */}
+            <div className="rounded-md border border-[var(--border)] bg-[var(--surface-2)]/60 p-2.5 text-[11.5px] space-y-1.5">
+              <div className="flex items-center justify-between text-[var(--text-3)]">
+                <span>Unit rate:</span>
+                <span className="font-semibold text-[var(--text-1)] num">
+                  1$ = ₹{rateDisplay}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-[var(--text-3)]">
+                <span>Issued to customers:</span>
+                <span className="font-semibold text-[var(--text-1)] num">
+                  {issued.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-[var(--border)] pt-1.5">
+                <span className="font-medium text-[var(--text-2)]">Remaining balance:</span>
+                {isSurplus && (
+                  <span className="inline-flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded text-[11px] num">
+                    <span>▲ Surplus:</span>
+                    <span>+{remaining.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT</span>
+                  </span>
+                )}
+                {isDeficit && (
+                  <span className="inline-flex items-center gap-1 font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded text-[11px] num">
+                    <span>▼ Deficit:</span>
+                    <span>{remaining.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT</span>
+                  </span>
+                )}
+                {!isSurplus && !isDeficit && (
+                  <span className="inline-flex items-center gap-1 font-semibold text-[var(--text-3)] bg-[var(--surface-3)] px-2 py-0.5 rounded text-[11px] num">
+                    Balanced (0.00 USDT)
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Common Day Note & Media Box */}
-        <div className="md:col-span-8 lg:col-span-9 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-1)] p-3.5 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-7 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-1)] p-3.5 shadow-sm flex flex-col justify-between">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <svg
@@ -218,7 +317,7 @@ export function DayFooterControls({
               </div>
             ) : (
               <p className="text-xs text-[var(--text-3)] text-center sm:text-left py-1">
-                No day note or closing screenshots yet. Click here to add day closing notes, handover remarks, or attach proof media.
+                No day note or closing screenshots yet. Click here to add day closing notes, handover remarks, or attach proof media. Notes auto-sync as you type.
               </p>
             )}
           </div>

@@ -247,6 +247,7 @@ export const ledgerDayCreateSchema = z.object({
   note: z.string().max(LIMITS.noteMax).nullable().optional(),
   attachments: noteAttachmentsSchema.optional(),
   usdtRate: z.number().nonnegative().nullable().optional(),
+  usdtPurchased: z.number().nonnegative().nullable().optional(),
 });
 
 export const ledgerDayUpdateSchema = z.object({
@@ -254,6 +255,7 @@ export const ledgerDayUpdateSchema = z.object({
   note: z.string().max(LIMITS.noteMax).nullable().optional(),
   attachments: noteAttachmentsSchema.optional(),
   usdtRate: z.number().nonnegative().nullable().optional(),
+  usdtPurchased: z.number().nonnegative().nullable().optional(),
 });
 
 export const ledgerDayRangeSchema = z.object({
@@ -373,6 +375,7 @@ export const importPayloadSchema = z.object({
         note: z.string().max(LIMITS.noteMax).nullable().optional(),
         attachments: noteAttachmentsSchema.optional(),
         usdtRate: z.number().nonnegative().nullable().optional(),
+        usdtPurchased: z.number().nonnegative().nullable().optional(),
         createdAt: z.number().int().positive(),
         updatedAt: z.number().int().positive(),
       }),

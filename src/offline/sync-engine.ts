@@ -294,6 +294,7 @@ export class SyncEngine {
               note: day.note ?? null,
               attachments: day.attachments ?? [],
               usdtRate: day.usdtRate ?? 0,
+              usdtPurchased: day.usdtPurchased ?? 0,
             },
           },
         });
